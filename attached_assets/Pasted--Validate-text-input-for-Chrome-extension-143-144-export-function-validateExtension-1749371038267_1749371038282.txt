@@ -1,0 +1,74 @@
+  * Validate text input for Chrome extension
+  143 |  */
+> 144 | export function validateExtensionInput(text: string): { isValid: boolean; error?: string } {
+      |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 145 |   if (!text || typeof text !== 'string') {
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 146 |     return { isValid: false, error: 'Text input is required' };
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 147 |   }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 148 |
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 149 |   if (text.trim().length === 0) {
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 150 |     return { isValid: false, error: 'Text input cannot be empty' };
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 151 |   }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 152 |
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 153 |   if (text.length > 5000) {
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 154 |     return { isValid: false, error: 'Text input is too long (max 5000 characters)' };
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 155 |   }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 156 |
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 157 |   return { isValid: true };
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 158 | }
+      | ^^
+  159 |
+  160 | const refinePromptFlow = ai.defineFlow(
+  161 |   {
+
+Server Actions must be async functions.
+
+
+
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 3.3s
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at ShadowPortal (C:\Users\Aakash\Downloads\PromptWeaver1 (1)\PromptWeaver1\node_modules\next\src\client\components\react-dev-overlay\ui\components\shadow-portal.tsx:5:32)
+    at DevOverlay (C:\Users\Aakash\Downloads\PromptWeaver1 (1)\PromptWeaver1\node_modules\next\src\client\components\react-dev-overlay\ui\dev-overlay.tsx:14:3)
+    at ReactDevOverlay (C:\Users\Aakash\Downloads\PromptWeaver1 (1)\PromptWeaver1\node_modules\next\src\server\dev\next-dev-server.ts:82:10)
+    at div
+    at Body (C:\Users\Aakash\Downloads\PromptWeaver1 (1)\PromptWeaver1\node_modules\next\src\server\render.tsx:1263:19)
+Warning: useLayoutEffect does nothing on the server, because its effect cannot be encoded into the server renderer's output format. This will lead to a mismatch between the initial, non-hydrated UI and the intended UI. To avoid this, useLayoutEffect should only be used in components that render exclusively on the client. See https://reactjs.org/link/uselayouteffect-ssr for common fixes.
+    at ShadowPortal (C:\Users\Aakash\Downloads\PromptWeaver1 (1)\PromptWeaver1\node_modules\next\src\client\components\react-dev-overlay\ui\components\shadow-portal.tsx:5:32)
+    at DevOverlay (C:\Users\Aakash\Downloads\PromptWeaver1 (1)\PromptWeaver1\node_modules\next\src\client\components\react-dev-overlay\ui\dev-overlay.tsx:14:3)
+    at ReactDevOverlay (C:\Users\Aakash\Downloads\PromptWeaver1 (1)\PromptWeaver1\node_modules\next\src\server\dev\next-dev-server.ts:82:10)
+    at div
+    at Body (C:\Users\Aakash\Downloads\PromptWeaver1 (1)\PromptWeaver1\node_modules\next\src\server\render.tsx:1263:19)
+ GET / 500 in 17209ms
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

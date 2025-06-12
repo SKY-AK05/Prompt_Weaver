@@ -1,0 +1,329 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  /* Font will be set by tailwind.config.ts via layout.tsx */
+}
+
+@keyframes loading-dot-pulse {
+  0%, 80%, 100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@layer base {
+  /* Removed the global '*' selector that applied border-border to all elements */
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+html:not(.light):not(.dark) {
+    /* Dark Theme (Primary visual style) applied as default */
+    --background-rgb: 0 0% 8%; /* Darker Black #141414 */
+    --foreground-rgb: 30 20% 92%; /* Alabaster #EDEBE8 */
+    --accent-rgb: 0 84% 65%; /* New Red #f25b5b */
+
+    --background: 0 0% 8%;
+    --foreground: 30 20% 92%;
+
+    --card: 0 0% 13.3%;
+    --card-foreground: 30 20% 92%;
+
+    --popover: 0 0% 13.3%;
+    --popover-foreground: 30 20% 92%;
+
+    --primary: 0 84% 65%;
+    --primary-foreground: 0 0% 8%;
+
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 30 20% 92%;
+
+    --muted: 0 0% 16%;
+    --muted-foreground: 30 20% 70%;
+
+    --accent: 0 84% 65%;
+    --accent-foreground: 0 0% 8%;
+    --accent-hsl: 0 84% 65%;
+
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 30 20% 92%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+
+    --ring: 0 84% 65%;
+
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem; /* Rounded UI elements */
+
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 30 20% 92%;
+    --sidebar-primary: 0 84% 65%;
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent-foreground: 30 20% 92%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 0 84% 65%;
+    color-scheme: dark;
+  }
+
+  .dark {
+    /* Dark Theme (Primary visual style) */
+    --background-rgb: 0 0% 8%; /* Darker Black #141414 */
+    --foreground-rgb: 30 20% 92%; /* Alabaster #EDEBE8 */
+    --accent-rgb: 0 84% 65%; /* New Red #f25b5b */
+
+    --background: 0 0% 8%;
+    --foreground: 30 20% 92%;
+
+    --card: 0 0% 13.3%;
+    --card-foreground: 30 20% 92%;
+
+    --popover: 0 0% 13.3%;
+    --popover-foreground: 30 20% 92%;
+
+    --primary: 0 84% 65%;
+    --primary-foreground: 0 0% 8%;
+
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 30 20% 92%;
+
+    --muted: 0 0% 16%;
+    --muted-foreground: 30 20% 70%;
+
+    --accent: 0 84% 65%;
+    --accent-foreground: 0 0% 8%;
+    --accent-hsl: 0 84% 65%;
+
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 30 20% 92%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+
+    --ring: 0 84% 65%;
+
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 30 20% 92%;
+    --sidebar-primary: 0 84% 65%;
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent-foreground: 30 20% 92%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 0 84% 65%;
+    color-scheme: dark;
+  }
+  html.light {
+    /* Light Theme values */
+    --background-rgb: 48 30% 92%; /* Alabaster #EDEBE8 HSL components for rgba */
+    --foreground-rgb: 0 0% 13.3%; /* Strict Black #222222 */
+    --accent-rgb: 0 84% 65%; /* New Red #f25b5b */
+
+    --background: 30 20% 92%; /* Alabaster #EDEBE8 */
+    --foreground: 0 0% 13.3%; /* Strict Black #222222 */
+
+    --card: 30 20% 97%; /* Near White #F7F5F4 */
+    --card-foreground: 0 0% 13.3%; /* Strict Black #222222 */
+
+    --popover: 30 20% 97%; /* Near White #F7F5F4 */
+    --popover-foreground: 0 0% 13.3%; /* Strict Black #222222 */
+
+    --primary: 0 84% 65%; /* New Red #f25b5b */
+    --primary-foreground: 30 20% 92%; /* Alabaster #EDEBE8 for text on red */
+
+    --secondary: 26 20% 89%; /* Lighter Grayish Beige #E5E0DC */
+    --secondary-foreground: 0 0% 13.3%; /* Strict Black #222222 */
+
+    --muted: 26 20% 89%; /* Lighter Grayish Beige #E5E0DC */
+    --muted-foreground: 0 0% 25%; /* Slightly lighter Black #404040 */
+
+    --accent: 0 84% 65%; /* New Red #f25b5b */
+    --accent-foreground: 30 20% 92%; /* Alabaster #EDEBE8 */
+    --accent-hsl: 0 84% 65%;
+
+    --destructive: 0 80% 60%; /* A general destructive red, can be same as primary */
+    --destructive-foreground: 30 20% 92%; /* Alabaster */
+
+    --border: 26 20% 80%; /* Slightly darker Grayish Beige #CDC6C1 */
+    --input: 26 20% 80%;   /* Slightly darker Grayish Beige #CDC6C1 */
+
+    --ring: 0 84% 65%; /* New Red #f25b5b */
+
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem; /* Rounded UI elements */
+
+    --sidebar-background: 30 20% 92%;
+    --sidebar-foreground: 0 0% 13.3%;
+    --sidebar-primary: 0 84% 65%;
+    --sidebar-primary-foreground: 30 20% 92%;
+    --sidebar-accent: 26 20% 89%;
+    --sidebar-accent-foreground: 0 0% 13.3%;
+    --sidebar-border: 26 20% 80%;
+    --sidebar-ring: 0 84% 65%;
+    color-scheme: light;
+  }
+
+
+/* Water Waves Animation (keep for PromptWeaverClient tool) */
+@keyframes waveAnimation {
+  0% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+  25% { transform: translateY(-25px) rotate(3deg); opacity: 1; }
+  50% { transform: translateY(-15px) rotate(-2deg); opacity: 0.8; }
+  75% { transform: translateY(-20px) rotate(2deg); opacity: 1; }
+  100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+}
+
+@keyframes waveAnimationReverse {
+  0% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
+  25% { transform: translateY(20px) rotate(-3deg); opacity: 0.9; }
+  50% { transform: translateY(10px) rotate(2deg); opacity: 0.7; }
+  75% { transform: translateY(15px) rotate(-2deg); opacity: 0.9;}
+  100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
+}
+
+.wave-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.wave {
+  position: absolute;
+  left: -50%;
+  width: 200%;
+  height: 220px;
+  border-radius: 100% 100% 0 0;
+  animation-timing-function: cubic-bezier(0.455, 0.030, 0.515, 0.955);
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+.wave1 {
+  bottom: 10px;
+  height: 250px;
+  background-color: hsla(var(--accent-hsl), 0.04); /* Adjusted opacity for dark theme */
+  animation-name: waveAnimation;
+  animation-duration: 12s;
+  animation-delay: -2s;
+}
+.light .wave1 {
+  background-color: hsla(var(--accent-hsl), 0.08);
+}
+
+.wave2 {
+  bottom: 20px;
+  height: 280px;
+  background-color: hsla(var(--accent-hsl), 0.05); /* Adjusted opacity */
+  animation-name: waveAnimationReverse;
+  animation-duration: 15s;
+  animation-delay: -4s;
+}
+.light .wave2 {
+  background-color: hsla(var(--accent-hsl), 0.1);
+}
+
+.wave3 {
+  bottom: 0px;
+  height: 300px;
+  background-color: hsla(var(--accent-hsl), 0.06); /* Adjusted opacity */
+  animation-name: waveAnimation;
+  animation-duration: 18s;
+  animation-delay: -3s;
+}
+.light .wave3 {
+  background-color: hsla(var(--accent-hsl), 0.12);
+}
+
+
+@layer utilities {
+  .loading-dot {
+    @apply w-2 h-2 rounded-full;
+    animation: loading-dot-pulse 1.4s infinite ease-in-out;
+  }
+
+  .loading-dot:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+
+  .loading-dot:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+
+  .loading-dot:nth-child(3) {
+    animation-delay: 0s;
+  }
+
+  .textarea-shimmer-active {
+    overflow: hidden;
+    border-radius: calc(var(--radius) - 2px);
+  }
+
+  .dark .textarea-shimmer-active::before {
+     background: linear-gradient(
+      100deg,
+      hsla(var(--foreground-hsl), 0) 20%,
+      hsla(var(--foreground-hsl), 0.15) 40%, /* Adjusted opacity for Alabaster on dark */
+      hsla(var(--foreground-hsl), 0.25) 50%,
+      hsla(var(--foreground-hsl), 0.15) 60%,
+      hsla(var(--foreground-hsl), 0) 80%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-wave 1.8s linear infinite;
+  }
+  .light .textarea-shimmer-active::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      100deg,
+      hsla(0, 0%, 0%, 0) 20%, /* Black shimmer on light theme */
+      hsla(0, 0%, 0%, 0.08) 40%,
+      hsla(0, 0%, 0%, 0.12) 50%,
+      hsla(0, 0%, 0%, 0.08) 60%,
+      hsla(0, 0%, 0%, 0) 80%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-wave 1.8s linear infinite;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  @keyframes shimmer-wave {
+    0% {
+      background-position: 200% center;
+    }
+    100% {
+      background-position: -200% center;
+    }
+  }
+}
+
+.trail-circle {
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999999;
+}
+    
