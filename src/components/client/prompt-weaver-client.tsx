@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Sparkles, Save, Lock, RefreshCcw, StarIcon, MessageSquareWarning, AlertCircle } from 'lucide-react';
+import { Copy, Sparkles, Save, Lock, RefreshCcw, MessageSquareWarning, AlertCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -241,59 +241,33 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
           </CardContent>
         </Card>
 
-        <Card className="md:flex-1">
-          <CardHeader>
-            <CardTitle>Refined Prompts</CardTitle>
-            <CardDescription>Choose the best version for your needs.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {refinedPrompts.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Your refined prompts will appear here.</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {refinedPrompts.map((prompt, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Version {index + 1}</span>
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <StarIcon
-                              key={i}
-                              className={cn(
-                                "h-4 w-4",
-                                i < prompt.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                              )}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopyToClipboard(prompt.promptText)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRefineAgain(prompt.promptText)}
-                        >
-                          <RefreshCcw className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{prompt.promptText}</p>
+        {refinedPrompts.length > 0 && (
+          <Card className="md:flex-1">
+            <CardHeader>
+              <CardTitle>Suggestions</CardTitle>
+              <CardDescription>Refined prompt ideas</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {refinedPrompts.map((prompt, i) => (
+                <div key={i} className="p-3 border rounded-md">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Suggestion {i + 1}</span>
+                    <div className="text-xs text-primary font-semibold">⭐ {prompt.rating}/10</div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  <p className="my-2 text-sm">{prompt.promptText}</p>
+                  <div className="flex gap-2">
+                    <Button onClick={() => handleCopyToClipboard(prompt.promptText)} size="sm" variant="outline">
+                      <Copy className="h-4 w-4 mr-1" />Copy
+                    </Button>
+                    <Button onClick={() => handleRefineAgain(prompt.promptText)} size="sm" variant="outline">
+                      <RefreshCcw className="h-4 w-4 mr-1" />Refine Again
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
