@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Sparkles, Save, Lock, RefreshCcw, StarIcon, MessageSquareWarning } from 'lucide-react';
+import { Copy, Sparkles, Save, Lock, RefreshCcw, StarIcon, MessageSquareWarning, AlertCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -48,14 +48,35 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
   const [lastAutoSavedPromptId, setLastAutoSavedPromptId] = React.useState<string | null>(null);
   const { toast } = useToast();
   const inputTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
-
+  const [refinementCount, setRefinementCount] = React.useState(0);
   const [showTemporarySaveWarning, setShowTemporarySaveWarning] = React.useState(false);
+
+  // Load refinement count from localStorage on mount
+  React.useEffect(() => {
+    if (!isLoggedIn) {
+      const savedCount = localStorage.getItem('refinementCount');
+      if (savedCount) {
+        setRefinementCount(parseInt(savedCount));
+      }
+    } else {
+      // Reset count when user logs in
+      setRefinementCount(0);
+      localStorage.removeItem('refinementCount');
+    }
+  }, [isLoggedIn]);
 
   const handleRefinePrompt = async () => {
     if (!inputText.trim()) {
       setError('Please enter an idea to refine.');
       return;
     }
+
+    // Check if non-logged-in user has reached the limit
+    if (!isLoggedIn && refinementCount >= 3) {
+      setError('You have reached the limit of 3 refinements. Please log in to continue.');
+      return;
+    }
+
     setError(null);
     setIsLoading(true);
     setRefinedPrompts([]);
@@ -70,6 +91,14 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
         setError('The AI did not return suggestions.');
       } else {
         setRefinedPrompts(result.refinedPrompts);
+        
+        // Increment refinement count for non-logged-in users
+        if (!isLoggedIn) {
+          const newCount = refinementCount + 1;
+          setRefinementCount(newCount);
+          localStorage.setItem('refinementCount', newCount.toString());
+        }
+
         // Auto-save the generated prompt to the database
         if (user) {
           const createdAt = new Date();
@@ -92,16 +121,15 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
               expires_at: expiresAt.toISOString(),
               created_at: createdAt.toISOString(),
             }
-          ]).select('id'); // Select the ID of the inserted row
+          ]).select('id');
 
           if (saveError) {
             console.error("Error auto-saving prompt:", saveError);
             toast({ title: "Auto-Save Failed", description: saveError.message, variant: "destructive" });
-            setLastAutoSavedPromptId(null); // Clear ID on error
+            setLastAutoSavedPromptId(null);
           } else if (insertedData && insertedData.length > 0) {
-            setLastAutoSavedPromptId(insertedData[0].id); // Store the ID
+            setLastAutoSavedPromptId(insertedData[0].id);
             toast({ title: "Auto-Saved!", description: "Your prompt has been temporarily saved." });
-            // Always show warning after auto-save
             setShowTemporarySaveWarning(true);
           }
         }
@@ -145,13 +173,15 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
         toast({ title: "Save Failed", description: error.message, variant: "destructive" });
       } else {
         toast({ title: "Saved!", description: "Prompt saved permanently." });
-        setLastAutoSavedPromptId(null); // Clear the ID as it's now permanent
-        setShowTemporarySaveWarning(false); // Hide warning after permanent save
+        setLastAutoSavedPromptId(null);
+        setShowTemporarySaveWarning(false);
       }
     } catch (e: any) {
       toast({ title: "Error", description: e.message || "An unexpected error occurred while saving.", variant: "destructive" });
     }
   };
+
+  const isRefineDisabled = !isLoggedIn && refinementCount >= 3;
 
   return (
     <div className="w-full max-w-5xl space-y-8 mx-auto">
@@ -177,7 +207,10 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
               className="min-h-[120px] mb-6"
             />
             <div className="flex gap-3 mb-6">
-              <Button onClick={handleRefinePrompt} disabled={isLoading}> 
+              <Button 
+                onClick={handleRefinePrompt} 
+                disabled={isLoading || isRefineDisabled}
+              > 
                 {isLoading ? 'Refining...' : (<><Sparkles className="mr-2 h-5 w-5" />Refine</>)}
               </Button>
               <Button onClick={handleSavePrompt} disabled={!isLoggedIn || isLoading} variant="outline">
@@ -185,6 +218,16 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
               </Button>
             </div>
             {error && <p className="text-destructive text-sm mb-6">{error}</p>}
+
+            {isRefineDisabled && (
+              <Alert className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Refinement Limit Reached</AlertTitle>
+                <AlertDescription>
+                  You have used all 3 free refinements. Please log in to continue refining prompts.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {showTemporarySaveWarning && (
               <Alert className="relative w-full border-l-4 border-primary bg-background text-foreground">
@@ -198,33 +241,59 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
           </CardContent>
         </Card>
 
-        {refinedPrompts.length > 0 && (
-          <Card className="md:flex-1">
-            <CardHeader>
-              <CardTitle>Suggestions</CardTitle>
-              <CardDescription>Refined prompt ideas</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {refinedPrompts.map((prompt, i) => (
-                <div key={i} className="p-3 border rounded-md">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Suggestion {i + 1}</span>
-                    <div className="text-xs text-primary font-semibold">⭐ {prompt.rating}/10</div>
+        <Card className="md:flex-1">
+          <CardHeader>
+            <CardTitle>Refined Prompts</CardTitle>
+            <CardDescription>Choose the best version for your needs.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {refinedPrompts.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Your refined prompts will appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {refinedPrompts.map((prompt, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Version {index + 1}</span>
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <StarIcon
+                              key={i}
+                              className={cn(
+                                "h-4 w-4",
+                                i < prompt.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyToClipboard(prompt.promptText)}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRefineAgain(prompt.promptText)}
+                        >
+                          <RefreshCcw className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{prompt.promptText}</p>
                   </div>
-                  <p className="my-2 text-sm">{prompt.promptText}</p>
-                  <div className="flex gap-2">
-                    <Button onClick={() => handleCopyToClipboard(prompt.promptText)} size="sm" variant="outline">
-                      <Copy className="h-4 w-4 mr-1" />Copy
-                    </Button>
-                    <Button onClick={() => handleRefineAgain(prompt.promptText)} size="sm" variant="outline">
-                      <RefreshCcw className="h-4 w-4 mr-1" />Refine Again
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
