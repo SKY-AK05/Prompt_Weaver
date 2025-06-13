@@ -1,4 +1,3 @@
-
 "use client";
 import AppHeader from "@/components/layout/app-header";
 import { Button } from "@/components/ui/button";
@@ -8,18 +7,80 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { UserCircle, KeyRound, Trash } from "lucide-react";
+import { useAuth } from '@/components/layout/app-header';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export default function AccountSettingsPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  const [fullName, setFullName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [currentPassword, setCurrentPassword] = useState<string>('');
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState<string>('');
+  const [isProfileUpdating, setIsProfileUpdating] = useState<boolean>(false);
+  const [isPasswordChanging, setIsPasswordChanging] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (user) {
+      setFullName(user.user_metadata?.full_name || '');
+      setEmail(user.email || '');
+    }
+  }, [user]);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: "Profile Updated (Placeholder)"});
+    setIsProfileUpdating(true);
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: { full_name: fullName },
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      toast({ title: "Profile Update Failed", description: error.message, variant: "destructive" });
+    } finally {
+      setIsProfileUpdating(false);
+    }
   };
 
-  const handleChangePassword = (e: React.FormEvent) => {
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: "Password Changed (Placeholder)"});
+    if (newPassword !== confirmNewPassword) {
+      toast({ title: "Password Mismatch", description: "New password and confirmation do not match.", variant: "destructive" });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({ title: "Password Too Short", description: "New password must be at least 6 characters long.", variant: "destructive" });
+      return;
+    }
+
+    setIsPasswordChanging(true);
+    try {
+      // Note: Supabase update user does not require current password for logged in users
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Password Changed", description: "Your password has been successfully changed." });
+      // Clear password fields
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+      toast({ title: "Password Change Failed", description: error.message, variant: "destructive" });
+    } finally {
+      setIsPasswordChanging(false);
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -46,13 +107,28 @@ export default function AccountSettingsPage() {
               <form onSubmit={handleUpdateProfile} className="space-y-4">
                 <div>
                   <Label htmlFor="fullName">Full Name</Label>
-                  <Input id="fullName" type="text" defaultValue="Current User Name" className="mt-1 text-base"/>
+                  <Input 
+                    id="fullName" 
+                    type="text" 
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="mt-1 text-base"
+                    disabled={isProfileUpdating}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" defaultValue="user@example.com" readOnly className="mt-1 text-base bg-muted/50 cursor-not-allowed"/>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    value={email}
+                    readOnly 
+                    className="mt-1 text-base bg-muted/50 cursor-not-allowed"
+                  />
                 </div>
-                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Update Profile</Button>
+                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isProfileUpdating}>
+                  {isProfileUpdating ? "Updating..." : "Update Profile"}
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -69,17 +145,43 @@ export default function AccountSettingsPage() {
               <form onSubmit={handleChangePassword} className="space-y-4">
                 <div>
                   <Label htmlFor="currentPassword">Current Password</Label>
-                  <Input id="currentPassword" type="password" required className="mt-1 text-base"/>
+                  <Input 
+                    id="currentPassword" 
+                    type="password" 
+                    required 
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="mt-1 text-base"
+                    disabled={isPasswordChanging}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="newPassword">New Password</Label>
-                  <Input id="newPassword" type="password" required className="mt-1 text-base"/>
+                  <Input 
+                    id="newPassword" 
+                    type="password" 
+                    required 
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="mt-1 text-base"
+                    disabled={isPasswordChanging}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-                  <Input id="confirmNewPassword" type="password" required className="mt-1 text-base"/>
+                  <Input 
+                    id="confirmNewPassword" 
+                    type="password" 
+                    required 
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    className="mt-1 text-base"
+                    disabled={isPasswordChanging}
+                  />
                 </div>
-                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Change Password</Button>
+                <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isPasswordChanging}>
+                  {isPasswordChanging ? "Changing..." : "Change Password"}
+                </Button>
               </form>
             </CardContent>
           </Card>

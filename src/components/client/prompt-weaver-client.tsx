@@ -12,13 +12,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Sparkles, Save, Lock, RefreshCcw, StarIcon } from 'lucide-react';
+import { Copy, Sparkles, Save, Lock, RefreshCcw, StarIcon, MessageSquareWarning } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const promptLevels = [
   { value: 'Quick' as const, label: 'Quick Suggestions' },
@@ -44,8 +45,11 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
   const [refinedPrompts, setRefinedPrompts] = React.useState<RefinedPrompt[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [lastAutoSavedPromptId, setLastAutoSavedPromptId] = React.useState<string | null>(null);
   const { toast } = useToast();
   const inputTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const [showTemporarySaveWarning, setShowTemporarySaveWarning] = React.useState(false);
 
   const handleRefinePrompt = async () => {
     if (!inputText.trim()) {
@@ -66,6 +70,41 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
         setError('The AI did not return suggestions.');
       } else {
         setRefinedPrompts(result.refinedPrompts);
+        // Auto-save the generated prompt to the database
+        if (user) {
+          const createdAt = new Date();
+          const expiresAt = new Date(createdAt.getTime() + 10 * 24 * 60 * 60 * 1000); // 10 days from now
+
+          const { data: insertedData, error: saveError } = await supabase.from("prompts").insert([
+            {
+              user_id: user.id,
+              username: user.email || 'anonymous',
+              prompt_text: inputText,
+              prompt_level: promptLevel,
+              refined_prompt_text_1: result.refinedPrompts[0]?.promptText || null,
+              refined_prompt_rating_1: result.refinedPrompts[0]?.rating || null,
+              refined_prompt_text_2: result.refinedPrompts[1]?.promptText || null,
+              refined_prompt_rating_2: result.refinedPrompts[1]?.rating || null,
+              refined_prompt_text_3: result.refinedPrompts[2]?.promptText || null,
+              refined_prompt_rating_3: result.refinedPrompts[2]?.rating || null,
+              is_favorite: false,
+              is_temporary: true,
+              expires_at: expiresAt.toISOString(),
+              created_at: createdAt.toISOString(),
+            }
+          ]).select('id'); // Select the ID of the inserted row
+
+          if (saveError) {
+            console.error("Error auto-saving prompt:", saveError);
+            toast({ title: "Auto-Save Failed", description: saveError.message, variant: "destructive" });
+            setLastAutoSavedPromptId(null); // Clear ID on error
+          } else if (insertedData && insertedData.length > 0) {
+            setLastAutoSavedPromptId(insertedData[0].id); // Store the ID
+            toast({ title: "Auto-Saved!", description: "Your prompt has been temporarily saved." });
+            // Always show warning after auto-save
+            setShowTemporarySaveWarning(true);
+          }
+        }
       }
     } catch (e: any) {
       setError(e.message || 'Unknown error');
@@ -92,44 +131,39 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
       toast({ title: "Login Required", description: "Login to save.", variant: "destructive" });
       return;
     }
-    if (refinedPrompts.length === 0) {
-      toast({ title: "Nothing to Save", description: "Refine a prompt first.", variant: "destructive" });
+    if (refinedPrompts.length === 0 || !lastAutoSavedPromptId) {
+      toast({ title: "Nothing to Save", description: "Refine a prompt first, or ensure it was auto-saved.", variant: "destructive" });
       return;
     }
 
-    const top = refinedPrompts[0];
+    try {
+      const { error } = await supabase.from("prompts")
+        .update({ is_temporary: false })
+        .eq("id", lastAutoSavedPromptId);
 
-    const { error } = await supabase.from("prompts").insert([
-      {
-        user_id: user.id,
-        username: user.email,
-        prompt_text: inputText,
-        prompt_level: promptLevel,
-        refined_prompt_text_1: top.promptText,
-        refined_prompt_rating_1: top.rating,
-        created_at: new Date().toISOString(),
-        is_favorite: false
+      if (error) {
+        toast({ title: "Save Failed", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Saved!", description: "Prompt saved permanently." });
+        setLastAutoSavedPromptId(null); // Clear the ID as it's now permanent
+        setShowTemporarySaveWarning(false); // Hide warning after permanent save
       }
-    ]);
-
-    if (error) {
-      toast({ title: "Save Failed", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Saved!", description: "Prompt saved successfully." });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "An unexpected error occurred while saving.", variant: "destructive" });
     }
   };
 
   return (
-    <div className="w-full max-w-5xl space-y-8">
+    <div className="w-full max-w-5xl space-y-8 mx-auto">
       <div className="flex flex-col md:flex-row gap-8">
         <Card className="md:flex-1">
           <CardHeader>
             <CardTitle>Craft Your Idea</CardTitle>
             <CardDescription>Describe your idea and choose detail level.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent>
             <Select value={promptLevel} onValueChange={(val: PromptLevel) => setPromptLevel(val)}>
-              <SelectTrigger><SelectValue placeholder="Select Detail Level" /></SelectTrigger>
+              <SelectTrigger className="mb-6"><SelectValue placeholder="Select Detail Level" /></SelectTrigger>
               <SelectContent>
                 {promptLevels.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
               </SelectContent>
@@ -140,9 +174,9 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Describe your idea..."
               readOnly={isLoading}
-              className="min-h-[120px]"
+              className="min-h-[120px] mb-6"
             />
-            <div className="flex gap-3">
+            <div className="flex gap-3 mb-6">
               <Button onClick={handleRefinePrompt} disabled={isLoading}> 
                 {isLoading ? 'Refining...' : (<><Sparkles className="mr-2 h-5 w-5" />Refine</>)}
               </Button>
@@ -150,7 +184,17 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
                 {isLoggedIn ? (<><Save className="mr-2 h-5 w-5" />Save</>) : (<><Lock className="mr-2 h-5 w-5" />Login to Save</>)}
               </Button>
             </div>
-            {error && <p className="text-destructive text-sm">{error}</p>}
+            {error && <p className="text-destructive text-sm mb-6">{error}</p>}
+
+            {showTemporarySaveWarning && (
+              <Alert className="relative w-full border-l-4 border-primary bg-background text-foreground">
+                <MessageSquareWarning className="h-5 w-5" />
+                <AlertTitle>Heads Up!</AlertTitle>
+                <AlertDescription>
+                  This prompt is currently **temporarily saved** for 10 days. To keep it permanently, please click the "Save" button. It will be automatically deleted otherwise.
+                </AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
 
