@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -10,15 +9,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Star, MessageSquare } from "lucide-react"; // Using MessageSquare
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/layout/app-header";
 
 export default function FeedbackSection() {
   const [rating, setRating] = React.useState(0);
   const [suggestion, setSuggestion] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [submitted, setSubmitted] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rating === 0 && !suggestion.trim()) {
       toast({
@@ -28,18 +31,43 @@ export default function FeedbackSection() {
       });
       return;
     }
-    console.log({ rating, suggestion, email });
-    setSubmitted(true);
-    toast({
-      title: "Feedback Submitted!",
-      description: "Thanks! Your feedback helps us improve PromptWeaver.",
-    });
-    setTimeout(() => {
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from("feedback").insert([
+        {
+          user_id: user?.id || null,
+          email: email || null,
+          rating: rating * 2, // Convert 1-5 scale to 0-10 scale
+          suggestion: suggestion.trim(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      ]);
+
+      if (error) throw error;
+
+      setSubmitted(true);
+      toast({
+        title: "Feedback Submitted!",
+        description: "Thanks! Your feedback helps us improve PromptWeaver.",
+      });
+      setTimeout(() => {
         setRating(0);
         setSuggestion("");
         setEmail("");
         setSubmitted(false);
-    }, 3000)
+      }, 3000);
+    } catch (error: any) {
+      console.error("Error submitting feedback:", error);
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Failed to submit feedback. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -67,7 +95,7 @@ export default function FeedbackSection() {
         <Card className="max-w-xl mx-auto shadow-lg bg-card rounded-lg">
           <CardHeader className="text-center">
             <MessageSquare className="mx-auto h-10 w-10 text-primary mb-3" /> {/* Changed Icon */}
-            <CardTitle className="text-3xl font-bold text-primary">We’d Love Your Feedback</CardTitle>
+            <CardTitle className="text-3xl font-bold text-primary">We'd Love Your Feedback</CardTitle>
             <CardDescription className="text-muted-foreground">
               Help us make PromptWeaver even better!
             </CardDescription>
@@ -126,8 +154,12 @@ export default function FeedbackSection() {
                 />
               </div>
 
-              <Button type="submit" className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md shadow-md">
-                Submit Feedback
+              <Button 
+                type="submit" 
+                className="w-full text-lg py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md shadow-md"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Submitting..." : "Submit Feedback"}
               </Button>
             </form>
           </CardContent>
