@@ -179,7 +179,7 @@ export default function AppHeader() {
     });
   };
 
-  const headerLogoSrc = currentTheme === 'dark' ? '/assets/logo-dark-theme.png' : '/assets/logo-light-theme.png';
+  const headerLogoSrc = '/assets/logo-dark-theme.png';
 
   const navItems = [
     { label: "Features", href: "/#features" },

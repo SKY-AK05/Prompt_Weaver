@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -21,12 +20,12 @@ const WhyChoosePromptWeaverSection: React.FC = () => {
     }
     
     setCurrentTheme(initialTheme);
-    setLogoSrc(initialTheme === 'dark' ? '/assets/logo-dark-theme.png' : '/assets/logo-light-theme.png');
+    setLogoSrc('/assets/logo-dark-theme.png');
 
     const handleThemeChange = () => {
       const newTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
       setCurrentTheme(newTheme);
-      setLogoSrc(newTheme === 'dark' ? '/assets/logo-dark-theme.png' : '/assets/logo-light-theme.png');
+      setLogoSrc('/assets/logo-dark-theme.png');
     };
 
     const observer = new MutationObserver((mutationsList) => {
@@ -46,7 +45,7 @@ const WhyChoosePromptWeaverSection: React.FC = () => {
             const newTheme = event.newValue as 'light' | 'dark';
             if (newTheme) {
                 setCurrentTheme(newTheme);
-                setLogoSrc(newTheme === 'dark' ? '/assets/logo-dark-theme.png' : '/assets/logo-light-theme.png');
+                setLogoSrc('/assets/logo-dark-theme.png');
             }
         }
     };

@@ -304,7 +304,7 @@ export default function CombinedAuthPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSignUpActive, setIsSignUpActive] = useState(false);
-  const [logoSrc, setLogoSrc] = useState('/assets/logo-dark-theme.png');
+  const [logoSrc, setLogoSrc] = useState('/assets/logo-light-theme.png');
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('dark');
   const [isLoading, setIsLoading] = useState(false);
   const [isSocialLoading, setIsSocialLoading] = useState(false);
@@ -330,12 +330,12 @@ export default function CombinedAuthPage() {
 
     const initialTheme = getInitialTheme();
     setCurrentTheme(initialTheme);
-    setLogoSrc(initialTheme === 'dark' ? '/assets/logo-dark-theme.png' : '/assets/logo-light-theme.png');
+    setLogoSrc('/assets/logo-light-theme.png');
 
     const handleThemeChange = () => {
       const newTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
       setCurrentTheme(newTheme);
-      setLogoSrc(newTheme === 'dark' ? '/assets/logo-dark-theme.png' : '/assets/logo-light-theme.png');
+      setLogoSrc('/assets/logo-light-theme.png');
     };
 
     const observer = new MutationObserver(handleThemeChange);
