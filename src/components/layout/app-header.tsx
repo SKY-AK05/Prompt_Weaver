@@ -58,10 +58,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (event === 'SIGNED_IN') {
-        toast({
-          title: 'Login Successful',
-          description: `Welcome, ${session?.user?.email || 'User'}!`,
-        });
+        // toast({
+        //   title: 'Login Successful',
+        //   description: `Welcome, ${session?.user?.email || 'User'}!`,
+        // });
         // Only redirect if on login page
         if (pathname === '/login') {
           router.push('/dashboard');

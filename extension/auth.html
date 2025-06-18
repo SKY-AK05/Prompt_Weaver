@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptWeaver - Authenticate</title>
+  <link rel="stylesheet" href="auth.css">
+  <script src="lib/supabase.js"></script> 
+</head>
+<body>
+  <img src="icons/Brain Waves.svg" class="floating-bg-icon bg-icon-top-left" alt="Brain Waves background" />
+  <img src="icons/magicwand.svg" class="floating-bg-icon bg-icon-bottom-right" alt="Magic Wand background" />
+  <img src="icons/puzzle1.svg" class="floating-bg-icon bg-icon-center" alt="Puzzle background" />
+  <div class="auth-container">
+    <img src="icons/padded_icon-128.png" alt="PromptWeaver Logo" class="logo">
+    <h1 class="title">PromptWeaver</h1>
+    
+    <div id="auth-error" class="error-message" style="display: none;"></div>
+
+    <div class="form-section">
+      <h2 class="section-title">Sign In / Sign Up</h2>
+      
+      <!-- Email/Password Form -->
+      <form id="emailPasswordForm" class="auth-form">
+        <input type="email" id="email" placeholder="Email Address" required>
+        <input type="password" id="password" placeholder="Password (min 6 chars)" required>
+        <button type="submit" id="signInButton">Sign In</button>
+        <button type="button" id="signUpButton">Sign Up with Email</button>
+      </form>
+      
+      <div class="divider">OR</div>
+      
+      <!-- Social Auth Buttons -->
+      <button id="googleSignInButton" class="social-button google">
+        Sign In with Google
+      </button>
+      <button id="githubSignInButton" class="social-button github">
+        Sign In with GitHub
+      </button>
+    </div>
+     <p class="back-to-splash"><a href="splash.html">&larr; Back to Welcome</a></p>
+  </div>
+
+  <script src="lib/supabaseClient.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>

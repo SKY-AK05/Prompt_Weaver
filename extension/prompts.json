@@ -1,0 +1,187 @@
+
+[
+  {
+    "id": "creative001",
+    "category": "Creative",
+    "text": "Write a short story about a clockmaker who discovers one of his clocks can manipulate time, but only in small, unpredictable ways.",
+    "type": "text"
+  },
+  {
+    "id": "creative002",
+    "category": "Creative",
+    "text": "Describe a futuristic city where plants and technology are perfectly integrated, and nature thrives alongside skyscrapers.",
+    "type": "text"
+  },
+  {
+    "id": "creative003",
+    "category": "Creative",
+    "text": "Imagine a character who can hear the thoughts of animals. What is their biggest challenge?",
+    "type": "text"
+  },
+  {
+    "id": "creative004",
+    "category": "Creative",
+    "text": "Compose a poem about the color blue, exploring its different shades and emotional connotations.",
+    "type": "text"
+  },
+  {
+    "id": "creative005",
+    "category": "Creative",
+    "text": "Design a new board game based on exploring a newly discovered alien planet. What are its core mechanics?",
+    "type": "text"
+  },
+  {
+    "id": "creative006",
+    "category": "Creative",
+    "text": "Create a dialogue between a skeptical detective and an AI that claims to have solved a famous unsolved mystery.",
+    "type": "text"
+  },
+  {
+    "id": "creative007",
+    "category": "Creative",
+    "text": "Outline a screenplay for a silent film set in a bustling 1920s jazz club, focusing on a love triangle.",
+    "type": "text"
+  },
+  {
+    "id": "image001",
+    "category": "Image",
+    "text": "A whimsical, dreamlike illustration of a library where books fly off the shelves and form constellations.",
+    "type": "image",
+    "imageUrl": "https://placehold.co/300x200.png",
+    "imageHint": "library books"
+  },
+  {
+    "id": "image002",
+    "category": "Image",
+    "text": "Photorealistic image of an astronaut discovering a glowing, alien flower on Mars.",
+    "type": "image",
+    "imageUrl": "https://placehold.co/300x200.png",
+    "imageHint": "astronaut Mars"
+  },
+  {
+    "id": "image003",
+    "category": "Image",
+    "text": "Concept art for a steampunk-inspired mechanical dragon, detailed with cogs, pipes, and emitting steam.",
+    "type": "image",
+    "imageUrl": "https://placehold.co/300x200.png",
+    "imageHint": "steampunk dragon"
+  },
+  {
+    "id": "image004",
+    "category": "Image",
+    "text": "A serene digital painting of a forest path at dusk, with bioluminescent mushrooms lighting the way.",
+    "type": "image",
+    "imageUrl": "https://placehold.co/300x200.png",
+    "imageHint": "forest path"
+  },
+  {
+    "id": "image005",
+    "category": "Image",
+    "text": "Pixel art scene of a cozy cyberpunk ramen shop on a rainy night, neon signs reflecting in puddles.",
+    "type": "image",
+    "imageUrl": "https://placehold.co/300x200.png",
+    "imageHint": "cyberpunk ramen"
+  },
+  {
+    "id": "image006",
+    "category": "Image",
+    "text": "Fantasy map illustration of a floating island kingdom, showing different districts and magical landmarks.",
+    "type": "image",
+    "imageUrl": "https://placehold.co/300x200.png",
+    "imageHint": "fantasy map"
+  },
+  {
+    "id": "image007",
+    "category": "Image",
+    "text": "A minimalist vector art of a cat silhouetted against a giant full moon.",
+    "type": "image",
+    "imageUrl": "https://placehold.co/300x200.png",
+    "imageHint": "cat moon"
+  },
+  {
+    "id": "psychology001",
+    "category": "Psychology",
+    "text": "Explain the concept of cognitive dissonance and provide three real-life examples.",
+    "type": "text"
+  },
+  {
+    "id": "psychology002",
+    "category": "Psychology",
+    "text": "Discuss the psychological benefits of mindfulness meditation for stress reduction.",
+    "type": "text"
+  },
+  {
+    "id": "psychology003",
+    "category": "Psychology",
+    "text": "Analyze the 'Big Five' personality traits. How do they predict behavior?",
+    "type": "text"
+  },
+  {
+    "id": "psychology004",
+    "category": "Psychology",
+    "text": "Describe the bystander effect and the factors that influence it.",
+    "type": "text"
+  },
+  {
+    "id": "psychology005",
+    "category": "Psychology",
+    "text": "What is 'imposter syndrome' and what are some strategies to overcome it?",
+    "type": "text"
+  },
+  {
+    "id": "psychology006",
+    "category": "Psychology",
+    "text": "Explore the psychological impact of social media on adolescent self-esteem.",
+    "type": "text"
+  },
+  {
+    "id": "psychology007",
+    "category": "Psychology",
+    "text": "What are the key differences between classical conditioning and operant conditioning? Provide examples for each.",
+    "type": "text"
+  },
+  {
+    "id": "coding001",
+    "category": "Coding",
+    "text": "Write a Python function to check if a string is a palindrome.",
+    "type": "text"
+  },
+  {
+    "id": "coding002",
+    "category": "Coding",
+    "text": "Generate a JavaScript snippet to fetch data from an API endpoint (https://api.example.com/data) and log the response.",
+    "type": "text"
+  },
+  {
+    "id": "coding003",
+    "category": "Coding",
+    "text": "Explain the difference between 'let', 'const', and 'var' in JavaScript.",
+    "type": "text"
+  },
+  {
+    "id": "coding004",
+    "category": "Coding",
+    "text": "Create a simple HTML and CSS structure for a responsive navigation bar.",
+    "type": "text"
+  },
+  {
+    "id": "coding005",
+    "category": "Coding",
+    "text": "How do you handle errors in a try-catch block in Java?",
+    "type": "text"
+  },
+  {
+    "id": "coding006",
+    "category": "Coding",
+    "text": "Write a SQL query to select all users from a 'users' table who registered in the last 30 days.",
+    "type": "text"
+  },
+  {
+    "id": "coding007",
+    "category": "Coding",
+    "text": "What is the purpose of a virtual environment in Python development?",
+    "type": "text"
+  }
+]
+
+    

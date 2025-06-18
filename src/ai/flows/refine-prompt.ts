@@ -2,10 +2,9 @@
 
 /**
  * @fileOverview A flow to refine simple user instructions into multiple high-quality prompt suggestions with ratings using Google Gemini.
- * Updated for Chrome Extension compatibility.
+ * Includes an option to apply a specific refinement style or a combination of styles.
  *
  * - refinePrompt - A function that refines the prompt.
- * - refinePromptForExtension - A simplified version for Chrome extension use
  * - RefinePromptInput - The input type for the refinePrompt function.
  * - RefinePromptOutput - The return type for the refinePrompt function.
  */
@@ -20,6 +19,10 @@ const RefinePromptInputSchema = z.object({
   promptLevel: z
     .enum(['Quick', 'Balanced', 'Comprehensive'])
     .describe('The desired complexity and style of prompt suggestions.'),
+  refinementStyle: z
+    .string()
+    .optional()
+    .describe('An optional specific refinement style or a comma-separated list of styles to apply, e.g., "Creative", "Concise, Formal", "SEO-Friendly".'),
 });
 export type RefinePromptInput = z.infer<typeof RefinePromptInputSchema>;
 
@@ -39,6 +42,7 @@ export type RefinePromptOutput = z.infer<typeof RefinePromptOutputSchema>;
 const ExtensionRefineInputSchema = z.object({
   instruction: z.string().min(1, 'Instruction cannot be empty'),
   promptLevel: z.string().optional().default('Balanced'),
+  refinementStyle: z.string().optional(),
 });
 export type ExtensionRefineInput = z.infer<typeof ExtensionRefineInputSchema>;
 
@@ -52,6 +56,10 @@ const geminiPrompt = ai.definePrompt({
 User's Input:
 Instruction: {{{instruction}}}
 Selected Prompt Level: {{{promptLevel}}}
+{{#if refinementStyle}}
+Selected Custom Refinement Styles: {{{refinementStyle}}}
+Please incorporate these characteristics into your prompt suggestions. If multiple styles are listed (comma-separated, e.g., "Concise, Creative, SEO-Friendly"), try to blend them harmoniously or apply them as relevant to each distinct suggestion you provide.
+{{/if}}
 
 Based on the 'promptLevel', generate the array of prompt variations as follows:
 
@@ -79,12 +87,14 @@ Your output MUST be a JSON object with a single key "refinedPrompts" which is an
     { "promptText": "Prompt variation 3, very detailed...", "rating": 7 }
   ]
 }
-
+{{#if refinementStyle}}
+Remember to apply the '{{{refinementStyle}}}' style(s) to all generated prompts.
+{{/if}}
 Generate the array of refined prompts with their ratings now.`,
 });
 
 export async function refinePrompt(input: RefinePromptInput): Promise<RefinePromptOutput> {
-  console.log('Using Google Gemini for prompt refinement with ratings.');
+  console.log('Using Google Gemini for prompt refinement. Level:', input.promptLevel, 'Styles:', input.refinementStyle);
   try {
     const {output} = await geminiPrompt(input);
     if (!output || !output.refinedPrompts || !Array.isArray(output.refinedPrompts) || output.refinedPrompts.some(p => typeof p.promptText !== 'string' || typeof p.rating !== 'number' || p.rating < 0 || p.rating > 10)) {
@@ -94,7 +104,6 @@ export async function refinePrompt(input: RefinePromptInput): Promise<RefineProm
   } catch (error) {
     console.error('Error during Google Gemini processing:', error);
     if (error instanceof Error && error.message.includes('GoogleGenerativeAI Error')) {
-      // Preserve the original Google AI error message for clarity
       throw error;
     } else if (error instanceof Error) {
       throw new Error(`Google Gemini processing error: ${error.message}`);
@@ -103,21 +112,15 @@ export async function refinePrompt(input: RefinePromptInput): Promise<RefineProm
   }
 }
 
-/**
- * Simplified version for Chrome Extension use
- * This function can be adapted for use in the Chrome extension context
- */
 export async function refinePromptForExtension(input: ExtensionRefineInput): Promise<RefinePromptOutput> {
-  // Validate and normalize the input
   const validatedInput = ExtensionRefineInputSchema.parse(input);
   
-  // Convert to the expected format
   const refinedInput: RefinePromptInput = {
     instruction: validatedInput.instruction,
-    promptLevel: (validatedInput.promptLevel as 'Quick' | 'Balanced' | 'Comprehensive') || 'Balanced'
+    promptLevel: (validatedInput.promptLevel as 'Quick' | 'Balanced' | 'Comprehensive') || 'Balanced',
+    refinementStyle: validatedInput.refinementStyle || undefined,
   };
 
-  // Ensure promptLevel is valid
   if (!['Quick', 'Balanced', 'Comprehensive'].includes(refinedInput.promptLevel)) {
     refinedInput.promptLevel = 'Balanced';
   }
@@ -125,10 +128,6 @@ export async function refinePromptForExtension(input: ExtensionRefineInput): Pro
   return refinePrompt(refinedInput);
 }
 
-/**
- * Utility function to create a simple API endpoint response format
- * Useful for Chrome extension communication
- */
 export async function createExtensionResponse(success: boolean, data?: any, error?: string) {
   return {
     success,
@@ -144,5 +143,5 @@ const refinePromptFlow = ai.defineFlow(
     inputSchema: RefinePromptInputSchema,
     outputSchema: RefinePromptOutputSchema,
   },
-  refinePrompt // Use the simplified refinePrompt function directly
+  refinePrompt
 );

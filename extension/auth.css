@@ -1,0 +1,218 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #121212; 
+  color: #E0E0E0; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background Decorative Elements - Outlined Shapes */
+body::before, body::after {
+  /* Removed decorative shapes */
+  content: none;
+}
+
+.auth-container {
+  /* background-color: #1E1E1E; */
+  padding: 30px;
+  border-radius: 12px;
+  /* box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); */
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  /* border: 1px solid #333333; */
+  position: relative; 
+  z-index: 1;
+}
+
+.logo {
+  width: 60px; 
+  height: 60px;
+  margin-bottom: 10px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #FFFFFF; 
+  margin-bottom: 25px;
+}
+
+.form-section {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 18px;
+  color: #A0A0A0; 
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+
+.auth-form input[type="email"],
+.auth-form input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #444444; 
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 14px;
+  background-color: #2C2C2C; 
+  color: #E0E0E0; 
+}
+
+.auth-form input[type="email"]:focus,
+.auth-form input[type="password"]:focus {
+  outline: none;
+  border-color: #E53E3E; 
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.3); 
+}
+
+.auth-form button { 
+  width: 100%;
+  padding: 12px;
+  background-color: #333333; 
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 10px;
+  display: flex; 
+  align-items: center;
+  justify-content: center;
+  gap: 8px; 
+}
+
+.auth-form button:hover {
+  background-color: #454545; 
+}
+
+.auth-form button#signUpButton {
+  background-color: #E53E3E; 
+}
+.auth-form button#signUpButton:hover {
+  background-color: #C53030; 
+}
+
+
+.divider {
+  font-size: 12px;
+  color: #888888; 
+  margin: 20px 0;
+  text-transform: uppercase;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background-color: #444444; 
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.social-button {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #444444; 
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.social-button.google {
+  background-color: #2C2C2C; 
+  color: #E0E0E0; 
+}
+.social-button.google:hover {
+  background-color: #3a3a3a; 
+  border-color: #555555;
+}
+
+.social-button.github {
+  background-color: #24292e; 
+  color: white;
+  border-color: #24292e;
+}
+.social-button.github:hover {
+  background-color: #333940;
+}
+
+.error-message {
+  background-color: rgba(229, 62, 62, 0.15); 
+  color: #E53E3E; 
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 15px;
+  border: 1px solid rgba(229, 62, 62, 0.3);
+}
+
+.back-to-splash {
+  margin-top: 20px;
+  font-size: 13px;
+}
+.back-to-splash a {
+  color: #A0A0A0; 
+  text-decoration: none;
+}
+.back-to-splash a:hover {
+  text-decoration: underline;
+  color: #E53E3E; 
+}
+
+/* Removed .button-icon-emoji as emojis are no longer used in these buttons */
+/* Add .button-icon-svg if SVGs were to be used here directly, but currently, auth buttons keep text */
+
+.floating-bg-icon {
+  position: absolute;
+  z-index: 0;
+  opacity: 0.10;
+  pointer-events: none;
+  width: 120px;
+  height: 120px;
+  user-select: none;
+}
+.bg-icon-top-left {
+  top: 18px;
+  left: 18px;
+  transform: rotate(-18deg);
+}
+.bg-icon-bottom-right {
+  bottom: 18px;
+  right: 18px;
+  transform: rotate(14deg);
+}
+.bg-icon-center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1.3) rotate(-8deg);
+}
