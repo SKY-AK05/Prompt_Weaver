@@ -2,6 +2,7 @@
 
 import type { RefinePromptInput, RefinePromptOutput } from '@/ai/flows/refine-prompt';
 import { refinePrompt } from '@/ai/flows/refine-prompt';
+import { suggestFramework } from '@/ai/flows/frameworksuggestion';
 import { cn } from "@/lib/utils";
 
 import * as React from 'react';
@@ -22,6 +23,10 @@ import { useAuth } from '@/components/layout/app-header';
 import PromptRefiner from '@/components/client/PromptRefiner';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MessageSquareWarning } from "lucide-react";
+import { Grid } from 'ldrs/react';
+import 'ldrs/react/Grid.css';
+import { frameworks } from '@/lib/frameworks';
+import { frameworkRefinement } from '@/ai/flows/framework-refinement';
 
 type UiPromptLevel = 'Simple' | 'Moderate' | 'Expert' | 'Custom';
 const uiPromptLevels: { value: UiPromptLevel; label: string; apiValue: 'Quick' | 'Balanced' | 'Comprehensive'; }[] = [
@@ -75,6 +80,46 @@ interface PromptWeaverClientProps {
   isLoggedIn: boolean;
 }
 
+// Framework categories mapping
+const frameworkCategories = [
+  {
+    label: 'Quick Tasks & Productivity',
+    ids: ['rtf', 'tag'],
+  },
+  {
+    label: 'Strategy & Planning',
+    ids: ['solve', 'dream', 'rise'],
+  },
+  {
+    label: 'Storytelling & Persuasion',
+    ids: ['care', 'score', 'mice'],
+  },
+  {
+    label: 'Communication & Outreach',
+    ids: ['race'],
+  },
+  {
+    label: 'Testing & Experimentation',
+    ids: ['pact'],
+  },
+  {
+    label: 'Creative & Brainstorming',
+    ids: ['idea'],
+  },
+  {
+    label: 'Job & Career',
+    ids: ['jobs'],
+  },
+  {
+    label: 'Coaching & Leadership',
+    ids: ['clear'],
+  },
+  {
+    label: 'Product & Project Creation',
+    ids: ['create'],
+  },
+];
+
 export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientProps) {
   const { user } = useAuth();
   const [uiPromptLevel, setUiPromptLevel] = React.useState<UiPromptLevel>('Moderate');
@@ -95,6 +140,11 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
   const [showSavedPopup, setShowSavedPopup] = React.useState(false);
   const [lastAutoSavedPromptId, setLastAutoSavedPromptId] = React.useState<string | null>(null);
   const [showTemporarySaveWarning, setShowTemporarySaveWarning] = React.useState(false);
+  const [selectedFramework, setSelectedFramework] = React.useState<string>('rtf');
+  const [selectedCategory, setSelectedCategory] = React.useState<string>('Quick Tasks & Productivity');
+  const [recommendedFramework, setRecommendedFramework] = React.useState<{ name: string; reason: string } | null>(null);
+  const [frameworkRefinedPrompts, setFrameworkRefinedPrompts] = React.useState<string[]>([]);
+  const [isFrameworkRefining, setIsFrameworkRefining] = React.useState(false);
 
   const examplePrompts = [
     "Write a cold email to pitch my AI startup idea to an investor",
@@ -107,13 +157,13 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
     "Create a bedtime story for kids about a turtle who wanted to fly",
     "Write an engaging Instagram caption announcing a product launch",
     "Generate a step-by-step guide to setting up a personal Notion dashboard",
-    "Make a funny tweet about AI replacing your dog’s therapist",
+    "Make a funny tweet about AI replacing your dog's therapist",
     "Summarize a news article on climate change in under 100 words",
     "Write a blog intro about the future of remote work in 2030",
     "Design a quiz prompt for testing emotional intelligence",
     "Turn a boring LinkedIn summary into a story-driven personal pitch",
     "Generate daily affirmations for anxious entrepreneurs",
-    "Translate ‘growth mindset’ into a 5-step plan for school students",
+    "Translate 'growth mindset' into a 5-step plan for school students",
     "Create a fantasy plot where a cat becomes the king of a robot city",
     "Write a cover letter for a UX Designer role at a climate-tech startup",
     "Generate a podcast episode outline about digital minimalism"
@@ -137,6 +187,8 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
     setError(null);
     setIsLoading(true);
     setRefinedPrompts([]);
+    setFrameworkRefinedPrompts([]);
+    setIsFrameworkRefining(false);
 
     let apiPromptLevel = uiPromptLevels.find(l => l.value === uiPromptLevel)?.apiValue || 'Balanced';
     let refinementStyleString: string | undefined = undefined;
@@ -196,6 +248,24 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
             setLastAutoSavedPromptId(insertedData[0].id);
             setShowTemporarySaveWarning(true);
           }
+        }
+        // Double-refinement for Expert level
+        if (selectedFramework) {
+          setIsFrameworkRefining(true);
+          // Use selectedFramework or AI-chosen framework
+          let frameworkName = frameworks.find(fw => fw.id === selectedFramework)?.name || 'R-T-F';
+          // Mock second AI call for each prompt
+          Promise.all(
+            (result.refinedPrompts || []).map(async (p, idx) => {
+              // Simulate API call delay
+              await new Promise(res => setTimeout(res, 800 + idx * 200));
+              // Mock: "Refined with [frameworkName]: [original prompt]"
+              return `(${frameworkName}) ${p.promptText} [Refined with ${frameworkName}]`;
+            })
+          ).then(frPrompts => {
+            setFrameworkRefinedPrompts(frPrompts);
+            setIsFrameworkRefining(false);
+          });
         }
       }
     } catch (e) {
@@ -276,6 +346,99 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
   const handleCustomize = () => {
     setIsCustomizing(true);
   };
+
+  const handleSuggestFramework = async () => {
+    if (!inputText.trim()) {
+      toast({ title: 'Please enter your idea first!', variant: 'destructive' });
+      return;
+    }
+
+    // Reset previous recommendation
+    setRecommendedFramework(null);
+
+    try {
+      // Show loading state
+      toast({ title: '🤖 AI is analyzing your prompt...', description: 'Finding the best framework for you' });
+
+      // Call the AI framework suggestion
+      const result = await suggestFramework({
+        instruction: inputText
+      });
+
+      if (result && result.framework && result.reason) {
+        setRecommendedFramework({ 
+          name: result.framework, 
+          reason: result.reason 
+        });
+        
+        // Find the framework in our frameworks list to get the ID
+        const frameworkId = frameworks.find(f => 
+          f.name.toLowerCase() === result.framework.toLowerCase() ||
+          f.name.replace(/[^A-Z]/g, '') === result.framework.replace(/[^A-Z]/g, '')
+        )?.id;
+
+        if (frameworkId) {
+          // Find and select the correct category and framework
+          const cat = frameworkCategories.find(cat => cat.ids.includes(frameworkId));
+          if (cat) {
+            setSelectedCategory(cat.label);
+            setSelectedFramework(frameworkId);
+          }
+        }
+
+        toast({ 
+          title: '✅ Framework suggested!', 
+          description: `${result.framework} has been selected for you` 
+        });
+      } else {
+        throw new Error('Invalid response from AI');
+      }
+    } catch (error) {
+      console.error('Error suggesting framework:', error);
+      toast({ 
+        title: '❌ Error suggesting framework', 
+        description: 'Please try again or select manually', 
+        variant: 'destructive' 
+      });
+      
+      // Fallback to R-T-F
+      const fallbackFramework = frameworks.find(f => f.id === 'rtf');
+      if (fallbackFramework) {
+        setRecommendedFramework({ 
+          name: fallbackFramework.name, 
+          reason: 'Default framework for simple tasks' 
+        });
+        setSelectedCategory('Quick Tasks & Productivity');
+        setSelectedFramework('rtf');
+      }
+    }
+  };
+
+  // Helper function to generate reason based on input and selected framework
+  const getFrameworkReason = (input: string, frameworkId: string): string => {
+    switch (frameworkId) {
+      case 'pact':
+        return 'testing or experimentation, which fits well with the P-A-C-T framework\'s problem-solution approach';
+      case 'care':
+        return 'storytelling or case studies, which aligns with C-A-R-E\'s narrative structure';
+      case 'solve':
+        return 'strategic planning or business decisions, making S-O-L-V-E ideal for structured problem-solving';
+      case 'race':
+        return 'communication or outreach, which R-A-C-E handles effectively with its audience-focused approach';
+      case 'dream':
+        return 'research or analysis, which D-R-E-A-M\'s comprehensive approach is perfect for';
+      case 'jobs':
+        return 'career or professional development, which J.O.B.S specifically addresses';
+      case 'create':
+        return 'product development or creation, which C.R.E.A.T.E is designed for';
+      case 'clear':
+        return 'coaching or leadership, which C.L.E.A.R\'s framework excels at';
+      case 'idea':
+        return 'creative ideation or brainstorming, which I.D.E.A\'s framework is built for';
+      default:
+        return 'a straightforward task that benefits from R-T-F\'s simple but effective structure';
+    }
+  };
   
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center max-w-full space-y-8 relative isolate">
@@ -293,223 +456,308 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
           <span className="text-xl font-bold text-red-500 tracking-wide">SAVED</span>
         </div>
       </div>
-      <div className="wave-container" aria-hidden="true">
-        <div className="wave wave1"></div>
-        <div className="wave wave2"></div>
-        <div className="wave wave3"></div>
-      </div>
-      
-      <div className="relative z-10 flex flex-col md:flex-row md:justify-center gap-8 w-full max-w-full">
-        <Card className="shadow-lg rounded-xl w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl font-headline text-primary">Craft Your Idea</CardTitle>
-            <CardDescription>Describe your idea and choose detail level.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2 text-left">Choose Prompt Level</label>
-              <div className="flex flex-wrap gap-2 items-center w-full">
-                <div className="flex gap-2 flex-grow">
-                  {uiPromptLevels.filter(level => level.value !== 'Custom').map(level => (
-                    <Button
-                      key={level.value}
-                      variant={uiPromptLevel === level.value ? 'default' : 'outline'}
-                      onClick={() => {
-                        setUiPromptLevel(level.value);
-                        // If customizing, keep the panel open
-                      }}
-                      className={cn(
-                        "text-sm px-3 py-1.5 h-auto rounded-md",
-                        uiPromptLevel === level.value && (isCustomizing || !isCustomizing) && "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                      )}
-                    >
-                      {level.label}
-                    </Button>
-                  ))}
-                </div>
-                <div className="flex gap-2 justify-end flex-shrink-0 ml-auto">
-                  <Button
-                    variant={isCustomizing ? 'default' : 'outline'}
-                    onClick={() => setIsCustomizing((v) => !v)}
-                    className={cn("text-sm px-3 py-1.5 h-auto rounded-md", isCustomizing && "ring-2 ring-primary ring-offset-2 ring-offset-background")}
-                  >
-                    ⭐ Customize
-                    {isCustomizing ? (
-                      <ChevronUp className="ml-2 h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Slide-down customization panel above the text area */}
-            {isCustomizing && (
-              <div className="animate-slideDown">
-                <Card className="p-4 border-primary/50 bg-card/50">
-                  <CardHeader className="p-0 pb-3">
-                    <CardTitle className="text-lg font-semibold text-primary flex items-center gap-2">
-                      <Settings2 className="h-5 w-5" />
-                      Customize Your Prompt Style
-                      <span className="ml-2 text-xs text-muted-foreground">(Base: {uiPromptLevel})</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <CustomStyleDropdown label="Structure" options={structureOptions} selectedValue={structureStyle} onValueChange={setStructureStyle} emoji="🧱"/>
-                    <CustomStyleDropdown label="Tone" options={toneOptions} selectedValue={toneStyle} onValueChange={setToneStyle} emoji="🎨"/>
-                    <CustomStyleDropdown label="Purpose" options={purposeOptions} selectedValue={purposeStyle} onValueChange={setPurposeStyle} emoji="🎯"/>
-                    <CustomStyleDropdown label="AI Optimization" options={aiOptimizationOptions} selectedValue={aiOptimizationStyle} onValueChange={setAiOptimizationStyle} emoji="🤖"/>
-                    <CustomStyleDropdown label="Audience" options={audienceOptions} selectedValue={audienceStyle} onValueChange={setAudienceStyle} emoji="👥"/>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="prompt-input" className="block text-sm font-medium text-foreground mb-1 text-left">Your Idea</label>
-              <div className="flex justify-end mb-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-primary flex items-center gap-1 border border-primary"
-                  onClick={() => {
-                    const random = examplePrompts[Math.floor(Math.random() * examplePrompts.length)];
-                    setInputText(random);
-                  }}
-                >
-                  <span className="text-base">💬</span> Try Example
-                </Button>
-              </div>
-              {/* Show selected custom styles as hashtags in red text when customizing */}
-              {uiPromptLevel === 'Custom' && selectedCustomStyles.length > 0 && (
-                <div className="mb-2 flex flex-wrap gap-2">
-                  {selectedCustomStyles.map((style, idx) => (
-                    <span key={idx} className="text-xs font-semibold text-red-500 bg-red-500/10 px-2 py-1 rounded-full">#{style}</span>
-                  ))}
-                </div>
-              )}
-              <div 
-                className={cn(
-                  "relative",
-                  isLoading && "textarea-shimmer-active" 
-                )}
-              >
-                <Textarea
-                  id="prompt-input"
-                  ref={inputTextAreaRef}
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder="e.g., 'email to my boss about project delay', 'python script to sort files by date', 'fantasy story about a dragon learning to bake'"
-                  className={cn(
-                    "min-h-[120px] text-base p-3 rounded-md", 
-                    isLoading && "opacity-60"
-                  )}
-                  aria-label="Your idea for a prompt"
-                  readOnly={isLoading} 
-                  aria-busy={isLoading} 
-                />
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button 
-                onClick={handleRefinePrompt} 
-                disabled={isLoading || !inputText.trim()} 
-                className="flex-1 text-lg py-3 bg-accent hover:bg-accent/90 text-accent-foreground rounded-md shadow-md hover:shadow-lg transition-shadow flex items-center justify-center"
-                aria-label={isLoading ? "Refining idea" : "Refine My Idea"}
-              >
-                {isLoading ? (
-                  <>
-                    <div className="flex items-center justify-center space-x-1 mr-3" aria-hidden="true">
-                      <span className="loading-dot bg-accent-foreground"></span>
-                      <span className="loading-dot bg-accent-foreground"></span>
-                      <span className="loading-dot bg-accent-foreground"></span>
-                    </div>
-                    Refining...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Refine My Idea
-                  </>
-                )}
-              </Button>
-              <TooltipProvider>
-                <Tooltip delayDuration={100}>
-                  <TooltipTrigger asChild>
-                    <div className={cn(!isLoggedIn && "cursor-not-allowed")}> 
-                      <Button 
-                        onClick={handleSavePrompt} 
-                        disabled={!isLoggedIn || isLoading}
-                        variant="outline"
-                        className={cn(
-                          "flex-1 text-lg py-3 rounded-md shadow-md hover:shadow-lg transition-shadow flex items-center justify-center",
-                          !isLoggedIn && "opacity-50 pointer-events-none"
-                        )}
-                        aria-label={isLoggedIn ? "Save Prompt" : "Login to save prompt"}
-                      >
-                        {!isLoggedIn && <Lock className="mr-2 h-5 w-5" />}
-                        {isLoggedIn && <Save className="mr-2 h-5 w-5" />}
-                        Save Prompt
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  {!isLoggedIn && (
-                    <TooltipContent>
-                      <p>🔒 Login to unlock saving prompts</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            {error && <p className="text-sm text-destructive mt-2 p-2 bg-destructive/10 rounded-md">{error}</p>}
-          </CardContent>
-        </Card>
-
-        {refinedPrompts.length > 0 && (
-          <Card className="shadow-lg rounded-xl w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
+      {/* --- TWO COLUMN LAYOUT --- */}
+      <div className="relative z-10 w-full max-w-7xl flex flex-col lg:flex-row gap-8 items-start justify-center">
+        {/* LEFT COLUMN: stacked input cards */}
+        <div className="flex flex-col gap-8 w-full lg:w-1/2">
+          {/* 1. CONFIGURE REFINEMENT CARD */}
+          <Card className="shadow-lg rounded-xl w-full mx-auto">
             <CardHeader>
-              <CardTitle className="text-2xl font-headline text-primary">Refined Prompt Suggestions</CardTitle>
-              <CardDescription>Here are a few variations with ratings. Copy one or refine it again!</CardDescription>
+              <CardTitle className="text-2xl font-headline text-primary text-center">Configure Refinement</CardTitle>
+              <CardDescription className="text-center">Select prompt level and customize styles if needed.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {refinedPrompts.map((prompt, index) => (
-                <div key={index} className="border border-border p-4 rounded-lg bg-card shadow">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-semibold text-muted-foreground">Suggestion {index + 1}</span>
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                      <StarIcon className="h-3 w-3 fill-current" />
-                      {prompt.rating}/10
-                    </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2 text-left">Choose Prompt Level</label>
+                <div className="flex flex-wrap gap-2 items-center w-full">
+                  <div className="flex gap-2 flex-grow">
+                    {uiPromptLevels.filter(level => level.value !== 'Custom').map(level => (
+                      <Button
+                        key={level.value}
+                        variant={uiPromptLevel === level.value ? 'default' : 'outline'}
+                        onClick={() => {
+                          setUiPromptLevel(level.value);
+                        }}
+                        className={cn(
+                          "text-sm px-3 py-1.5 h-auto rounded-md",
+                          uiPromptLevel === level.value && (isCustomizing || !isCustomizing) && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                        )}
+                      >
+                        {level.label}
+                      </Button>
+                    ))}
                   </div>
-                  <p className="text-card-foreground whitespace-pre-wrap text-sm mb-3">{prompt.promptText}</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <Button onClick={() => handleCopyToClipboard(prompt.promptText)} variant="outline" size="sm" className="w-full text-sm py-2 rounded-md">
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy
-                    </Button>
-                    <Button onClick={() => handleRefineAgain(prompt.promptText)} variant="outline" size="sm" className="w-full text-sm py-2 rounded-md">
-                      <RefreshCcw className="mr-2 h-4 w-4" />
-                      Refine Again
+                  <div className="flex gap-2 justify-end flex-shrink-0 ml-auto">
+                    <Button
+                      variant={isCustomizing ? 'default' : 'outline'}
+                      onClick={() => setIsCustomizing((v) => !v)}
+                      className={cn("text-sm px-3 py-1.5 h-auto rounded-md", isCustomizing && "ring-2 ring-primary ring-offset-2 ring-offset-background")}
+                    >
+                      ⭐ Customize
+                      {isCustomizing ? (
+                        <ChevronUp className="ml-2 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
-              ))}
+              </div>
+              {/* Prompt Framework Dropdown for Expert Level */}
+              {uiPromptLevel === 'Expert' && (
+                <div className="flex flex-col gap-4">
+                  {/* AI Suggestion Button */}
+                  <Button onClick={handleSuggestFramework} disabled={!inputText.trim()} className="w-fit self-start">
+                    🤖 Let AI Suggest Framework
+                  </Button>
+                  {recommendedFramework && (
+                    <div className="mt-2 p-3 rounded bg-muted text-foreground border border-primary/30">
+                      <strong>{recommendedFramework.name}</strong> — {recommendedFramework.reason}
+                    </div>
+                  )}
+                  <label className="block text-sm font-medium text-foreground mb-2 text-left">Select Prompt Framework</label>
+                  {/* Category Dropdown */}
+                  <Select value={selectedCategory} onValueChange={(cat) => {
+                    setSelectedCategory(cat);
+                    setSelectedFramework(cat === 'Quick Tasks & Productivity' ? 'rtf' : '');
+                  }}>
+                    <SelectTrigger className="w-full text-sm py-2 rounded-md">
+                      <SelectValue placeholder="Choose a category or let AI choose..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ai">Let AI choose</SelectItem>
+                      {frameworkCategories.map(category => (
+                        <SelectItem key={category.label} value={category.label}>{category.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {/* Framework Dropdown (only if a category is selected and not AI) */}
+                  {selectedCategory && selectedCategory !== 'ai' && (
+                    <Select value={selectedFramework} onValueChange={setSelectedFramework}>
+                      <SelectTrigger className="w-full text-sm py-2 rounded-md mt-2">
+                        <SelectValue placeholder="Choose a framework..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {frameworks.filter(fw => frameworkCategories.find(cat => cat.label === selectedCategory)?.ids.includes(fw.id)).map(fw => (
+                          <SelectItem key={fw.id} value={fw.id} className="flex items-center gap-2">
+                            {fw.emoji && <span className="mr-1">{fw.emoji}</span>}{fw.name} <span className="text-xs text-muted-foreground">({fw.structure})</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
+              {/* Slide-down customization panel */}
+              {isCustomizing && (
+                <div className="animate-slideDown">
+                  <Card className="p-4 border-primary/50 bg-card/50">
+                    <CardHeader className="p-0 pb-3">
+                      <CardTitle className="text-lg font-semibold text-primary flex items-center gap-2">
+                        <Settings2 className="h-5 w-5" />
+                        Customize Your Prompt Style
+                        <span className="ml-2 text-xs text-muted-foreground">(Base: {uiPromptLevel})</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <CustomStyleDropdown label="Structure" options={structureOptions} selectedValue={structureStyle} onValueChange={setStructureStyle} emoji="🧱"/>
+                      <CustomStyleDropdown label="Tone" options={toneOptions} selectedValue={toneStyle} onValueChange={setToneStyle} emoji="🎨"/>
+                      <CustomStyleDropdown label="Purpose" options={purposeOptions} selectedValue={purposeStyle} onValueChange={setPurposeStyle} emoji="🎯"/>
+                      <CustomStyleDropdown label="AI Optimization" options={aiOptimizationOptions} selectedValue={aiOptimizationStyle} onValueChange={setAiOptimizationStyle} emoji="🤖"/>
+                      <CustomStyleDropdown label="Audience" options={audienceOptions} selectedValue={audienceStyle} onValueChange={setAudienceStyle} emoji="👥"/>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </CardContent>
           </Card>
-        )}
+          {/* 2. CRAFT YOUR IDEA CARD */}
+          <Card className="shadow-lg rounded-xl w-full mx-auto">
+            <CardHeader>
+              <CardTitle className="text-2xl font-headline text-primary text-center">Craft Your Idea</CardTitle>
+              <CardDescription className="text-center">Enter your initial concept for AI refinement.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <label htmlFor="prompt-input" className="block text-sm font-medium text-foreground mb-1 text-left">Your Idea</label>
+                <div className="flex justify-end mb-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-primary flex items-center gap-1 border border-primary"
+                    onClick={() => {
+                      const random = examplePrompts[Math.floor(Math.random() * examplePrompts.length)];
+                      setInputText(random);
+                    }}
+                  >
+                    <span className="text-base">💬</span> Try Example
+                  </Button>
+                </div>
+                {/* Show selected custom styles as hashtags in red text when customizing */}
+                {uiPromptLevel === 'Custom' && selectedCustomStyles.length > 0 && (
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    {selectedCustomStyles.map((style, idx) => (
+                      <span key={idx} className="text-xs font-semibold text-red-500 bg-red-500/10 px-2 py-1 rounded-full">#{style}</span>
+                    ))}
+                  </div>
+                )}
+                <div 
+                  className={cn(
+                    "relative",
+                    isLoading && "textarea-shimmer-active" 
+                  )}
+                >
+                  <Textarea
+                    id="prompt-input"
+                    ref={inputTextAreaRef}
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    placeholder="e.g., 'email to my boss about project delay', 'python script to sort files by date', 'fantasy story about a dragon learning to bake'"
+                    className={cn(
+                      "min-h-[120px] text-base p-3 rounded-md", 
+                      isLoading && "opacity-60"
+                    )}
+                    aria-label="Your idea for a prompt"
+                    readOnly={isLoading} 
+                    aria-busy={isLoading} 
+                  />
+                  {isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/60 z-10">
+                      <Grid size={48} speed={1.5} color="black" />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button 
+                  onClick={handleRefinePrompt} 
+                  disabled={isLoading || !inputText.trim()} 
+                  className="flex-1 text-lg py-3 bg-accent hover:bg-accent/90 text-accent-foreground rounded-md shadow-md hover:shadow-lg transition-shadow flex items-center justify-center"
+                  aria-label={isLoading ? "Refining idea" : "Refine My Idea"}
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="flex items-center justify-center mr-3">
+                        <Grid size={32} speed={1.5} color="black" />
+                      </span>
+                      Refining...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Refine My Idea
+                    </>
+                  )}
+                </Button>
+                <TooltipProvider>
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <div className={cn(!isLoggedIn && "cursor-not-allowed")}> 
+                        <Button 
+                          onClick={handleSavePrompt} 
+                          disabled={!isLoggedIn || isLoading}
+                          variant="outline"
+                          className={cn(
+                            "flex-1 text-lg py-3 rounded-md shadow-md hover:shadow-lg transition-shadow flex items-center justify-center",
+                            !isLoggedIn && "opacity-50 pointer-events-none"
+                          )}
+                          aria-label={isLoggedIn ? "Save Prompt" : "Login to save prompt"}
+                        >
+                          {!isLoggedIn && <Lock className="mr-2 h-5 w-5" />}
+                          {isLoggedIn && <Save className="mr-2 h-5 w-5" />}
+                          Save Prompt
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    {!isLoggedIn && (
+                      <TooltipContent>
+                        <p>🔒 Login to unlock saving prompts</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              {error && <p className="text-sm text-destructive mt-2 p-2 bg-destructive/10 rounded-md">{error}</p>}
+            </CardContent>
+          </Card>
+          {/* HEADS UP ALERT BELOW CRAFT CARD */}
+          {showTemporarySaveWarning && (
+            <Alert className="relative w-full border-l-4 border-primary bg-background text-foreground">
+              <MessageSquareWarning className="h-5 w-5" />
+              <AlertTitle>Heads Up!</AlertTitle>
+              <AlertDescription>
+                This prompt is currently <b>temporarily saved</b> for 10 days. To keep it permanently, please click the "Save" button. It will be automatically deleted otherwise.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+        {/* RIGHT COLUMN: results card */}
+        <div className="w-full lg:w-1/2 flex flex-col gap-8">
+          {refinedPrompts.length > 0 && (
+            <Card className="shadow-lg rounded-xl w-full mx-auto">
+              <CardHeader>
+                <CardTitle className="text-2xl font-headline text-primary">Refined Prompt Suggestions</CardTitle>
+                <CardDescription>Here are a few variations with ratings. Copy one or refine it again!</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {refinedPrompts.map((p, idx) => (
+                  <div key={idx} className="mb-4 p-3 rounded bg-muted/60 border border-primary/10">
+                    <div className="font-semibold mb-1">Expert-level Prompt {idx + 1} <span className="text-xs text-muted-foreground">(Rating: {p.rating}/10)</span></div>
+                    <div className="whitespace-pre-line text-sm">{p.promptText}</div>
+                  </div>
+                ))}
+                {/* Add Refine Based on Framework Button */}
+                <Button
+                  onClick={async () => {
+                    if (!selectedFramework) return;
+                    setIsFrameworkRefining(true);
+                    setFrameworkRefinedPrompts([]);
+                    const frameworkObj = frameworks.find(fw => fw.id === selectedFramework);
+                    if (frameworkObj) {
+                      const frPrompts = await Promise.all(
+                        refinedPrompts.map(async (p) => {
+                          try {
+                            const refined = await frameworkRefinement({
+                              promptText: p.promptText,
+                              framework: frameworkObj.name,
+                              frameworkStructure: frameworkObj.structure
+                            });
+                            return `${refined.frameworkRefinedPrompt}\n\n${refined.frameworkExplanation}`;
+                          } catch (err) {
+                            return `Framework refinement failed.`;
+                          }
+                        })
+                      );
+                      setFrameworkRefinedPrompts(frPrompts);
+                    }
+                    setIsFrameworkRefining(false);
+                  }}
+                  disabled={isFrameworkRefining || !selectedFramework}
+                  className="w-full mt-2"
+                >
+                  {isFrameworkRefining ? 'Refining with Framework...' : 'Refine Based on Framework'}
+                </Button>
+                {/* Framework-refined prompts */}
+                {frameworkRefinedPrompts.length > 0 && (
+                  <div className="mt-6">
+                    <div className="text-lg font-bold mb-2 text-primary">Framework-Refined Prompts</div>
+                    {isFrameworkRefining && (
+                      <div className="text-sm text-muted-foreground mb-2">Refining prompts using the selected framework...</div>
+                    )}
+                    {frameworkRefinedPrompts.map((fr, idx) => (
+                      <div key={idx} className="mb-4 p-3 rounded bg-muted border border-primary/20">
+                        <div className="font-semibold mb-1">Framework-Refined Prompt {idx + 1}</div>
+                        <div className="whitespace-pre-line text-sm">{fr}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-      {showTemporarySaveWarning && (
-        <Alert className="relative w-full border-l-4 border-primary bg-background text-foreground">
-          <MessageSquareWarning className="h-5 w-5" />
-          <AlertTitle>Heads Up!</AlertTitle>
-          <AlertDescription>
-            This prompt is currently <b>temporarily saved</b> for 10 days. To keep it permanently, please click the "Save" button. It will be automatically deleted otherwise.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* --- END TWO COLUMN LAYOUT --- */}
     </div>
   );
 }

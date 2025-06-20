@@ -185,6 +185,7 @@ export default function AppHeader() {
     { label: "Features", href: "/#features" },
     { label: "How it Works", href: "/#how-it-works" },
     { label: "Examples", href: "/#examples" },
+    { label: "Frameworks", href: "/frameworks" },
     { label: "Feedback", href: "/feedback" },
   ];
 

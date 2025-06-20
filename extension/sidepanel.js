@@ -4,6 +4,8 @@ class PromptWeaverRefine {
   constructor() {
     console.log('PromptWeaverRefine: constructor called');
     this.checkAuth(); 
+    this.currentResultIndex = 0;
+    this.refinedPrompts = [];
   }
 
   async checkAuth() {
@@ -22,6 +24,7 @@ class PromptWeaverRefine {
       } else {
         this.renderUI();
         this.initializeElements();
+        this.updateThemeToggleIcon();
         this.attachEventListeners();
         this.fetchAndSetSelectedText().then(selectedTextFetched => {
           console.log('PromptWeaverRefine: fetchAndSetSelectedText completed, fetched:', selectedTextFetched);
@@ -50,6 +53,11 @@ class PromptWeaverRefine {
           <img src="icons/padded_icon-48.png" alt="PromptWeaver" class="logo">
           <h1 class="title">Refine Prompt</h1>
           <div class="header-actions">
+            <button id="themeToggleButton" class="theme-toggle-button" aria-label="Toggle Theme" style="background: none; border: none; margin-right: 8px; cursor: pointer;">
+              <svg id="themeToggleIcon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <!-- Icon will be set by JS -->
+              </svg>
+            </button>
             <button id="backButton" class="back-button" aria-label="Back to Menu">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="button-icon-svg"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
@@ -72,26 +80,20 @@ class PromptWeaverRefine {
               rows="3"
             ></textarea>
           </div>
-          
-          <div class="form-group">
-            <label for="promptLevel" class="label">Prompt Level:</label>
-            <select id="promptLevel" class="select">
-              <option value="Quick">Quick</option>
-              <option value="Balanced" selected>Balanced</option>
-              <option value="Comprehensive">Comprehensive</option>
-              <option value="Custom">⭐ Customize</option>
-            </select>
-          </div>
-          
-          <div id="customizeSection" style="display:none; margin-bottom: 12px;">
-            <div class="form-group">
-              <label for="baseCustomLevel" class="label">Base Prompt Level for Customization:</label>
-              <select id="baseCustomLevel" class="select">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="promptLevel" class="label" style="margin-bottom: 6px; display: block;">Prompt Level:</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <select id="promptLevel" class="select" style="flex: 1; min-width: 0; height: 40px; font-size: 15px; border-radius: 8px;">
                 <option value="Quick">Simple</option>
                 <option value="Balanced" selected>Moderate</option>
                 <option value="Comprehensive">Expert</option>
               </select>
+              <button type="button" id="customizeButton" class="button" style="flex: 1; min-width: 0; height: 40px; font-size: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600;">
+                <span style="font-size: 18px;">⭐</span> Customize
+              </button>
             </div>
+          </div>
+          <div id="customizePanel" style="display:none; border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fafbfc;">
             <div class="form-group">
               <label for="structureStyle" class="label">Structure:</label>
               <select id="structureStyle" class="select"><option value="">None</option><option value="Concise">Concise</option><option value="Expanded">Expanded</option><option value="Step-by-step">Step-by-step</option></select>
@@ -112,18 +114,22 @@ class PromptWeaverRefine {
               <label for="audienceStyle" class="label">Audience:</label>
               <select id="audienceStyle" class="select"><option value="">None</option><option value="Beginner-Friendly">Beginner-Friendly</option><option value="Technical">Technical</option><option value="Marketing">Marketing</option></select>
             </div>
+            <button type="button" id="applyCustomizeButton" class="button" style="margin-top: 8px; width: 100%;">Apply</button>
           </div>
-          
-          <button type="button" id="refineButton" class="button">
+          <button type="button" id="refineButton" class="button" style="margin-top: 10px;">
             Refine Prompt
           </button>
         </form>
-        
         <div id="results" class="results">
           <!-- Prompt results will be displayed here -->
         </div>
       </div>
     `;
+    console.log('UI rendered. themeToggleButton:', document.getElementById('themeToggleButton'));
+    console.log('UI rendered. themeToggleIcon:', document.getElementById('themeToggleIcon'));
+    // Apply theme on render
+    this.applyTheme(this.getStoredTheme() || 'dark');
+    this.updateThemeToggleIcon();
   }
 
 
@@ -137,16 +143,21 @@ class PromptWeaverRefine {
     this.resultsDiv = document.getElementById('results');
     this.logoutButton = document.getElementById('logoutButton');
     this.backButton = document.getElementById('backButton');
-    this.baseCustomLevel = document.getElementById('baseCustomLevel');
     this.structureStyle = document.getElementById('structureStyle');
     this.toneStyle = document.getElementById('toneStyle');
     this.purposeStyle = document.getElementById('purposeStyle');
     this.aiOptimizationStyle = document.getElementById('aiOptimizationStyle');
     this.audienceStyle = document.getElementById('audienceStyle');
-    this.customizeSection = document.getElementById('customizeSection');
+    this.customizePanel = document.getElementById('customizePanel');
     this.customStyleSummary = document.getElementById('customStyleSummary');
+    this.customizeButton = document.getElementById('customizeButton');
+    this.applyCustomizeButton = document.getElementById('applyCustomizeButton');
+    this.themeToggleButton = document.getElementById('themeToggleButton');
+    this.themeToggleIcon = document.getElementById('themeToggleIcon');
 
     if(!this.refineButton) console.error("PromptWeaverRefine: Refine button not found after UI render!");
+    console.log('Elements initialized. themeToggleButton:', this.themeToggleButton);
+    console.log('Elements initialized. themeToggleIcon:', this.themeToggleIcon);
   }
 
   attachEventListeners() {
@@ -165,13 +176,6 @@ class PromptWeaverRefine {
     if (this.promptLevel) {
         this.promptLevel.addEventListener('change', () => {
           this.saveFormData();
-          if (this.promptLevel.value === 'Custom') {
-            this.customizeSection.style.display = '';
-            this.updateCustomStyleSummary();
-          } else {
-            this.customizeSection.style.display = 'none';
-            this.customStyleSummary.style.display = 'none';
-          }
         });
     }
     if (this.logoutButton) {
@@ -182,12 +186,26 @@ class PromptWeaverRefine {
             window.location.href = 'menu.html';
         });
     }
-    // Add listeners for custom style dropdowns
-    [this.structureStyle, this.toneStyle, this.purposeStyle, this.aiOptimizationStyle, this.audienceStyle].forEach(dropdown => {
-      if (dropdown) {
-        dropdown.addEventListener('change', () => this.updateCustomStyleSummary());
-      }
-    });
+    if (this.customizeButton) {
+      this.customizeButton.addEventListener('click', () => {
+        this.customizePanel.style.display = this.customizePanel.style.display === 'none' ? '' : 'none';
+      });
+    }
+    if (this.applyCustomizeButton) {
+      this.applyCustomizeButton.addEventListener('click', () => {
+        this.customizePanel.style.display = 'none';
+        this.showCustomStyleSummary();
+        this.isCustomizing = true;
+      });
+    }
+    if (this.themeToggleButton) {
+      this.themeToggleButton.addEventListener('click', () => {
+        const newTheme = (this.getStoredTheme() === 'dark') ? 'light' : 'dark';
+        this.applyTheme(newTheme);
+        this.storeTheme(newTheme);
+        this.updateThemeToggleIcon();
+      });
+    }
   }
 
   async handleLogout() {
@@ -323,8 +341,7 @@ class PromptWeaverRefine {
     const text = this.inputText.value.trim();
     let level = this.promptLevel.value;
     let refinementStyle = undefined;
-    if (level === 'Custom') {
-      level = this.baseCustomLevel.value;
+    if (this.isCustomizing) {
       refinementStyle = [
         this.structureStyle.value,
         this.toneStyle.value,
@@ -396,6 +413,7 @@ class PromptWeaverRefine {
       this.showError(displayMessage);
     } finally {
       this.setLoading(false, this.refineButton, 'Refine Prompt');
+      this.showCustomStyleSummary(false); // Collapse summary after refining
     }
   }
 
@@ -442,43 +460,64 @@ class PromptWeaverRefine {
   displayResults(prompts) {
     console.log('PromptWeaverRefine: displayResults called with prompts -', prompts);
     if (!this.resultsDiv) {
-        console.error("PromptWeaverRefine: resultsDiv not found for displayResults.");
-        return;
+      console.error("PromptWeaverRefine: resultsDiv not found for displayResults.");
+      return;
     }
-    this.resultsDiv.innerHTML = '<h3 style="margin-bottom: 12px; font-size: 16px; font-weight: 600;">Refined Prompts:</h3>';
-    
-    prompts.forEach((prompt, index) => {
-      const resultCard = document.createElement('div');
-      resultCard.className = 'result-card';
-      
-      const ratingDisplay = prompt.rating ? `<span class="rating">${prompt.rating}/10</span>` : '';
-      
-      resultCard.innerHTML = `
+    this.refinedPrompts = prompts;
+    this.currentResultIndex = 0;
+    this.renderCurrentResult();
+  }
+
+  renderCurrentResult() {
+    if (!this.resultsDiv) return;
+    if (!this.refinedPrompts || this.refinedPrompts.length === 0) {
+      this.resultsDiv.innerHTML = '';
+      return;
+    }
+    const prompt = this.refinedPrompts[this.currentResultIndex];
+    this.resultsDiv.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 8px; gap: 12px;">
+        <button id="resultPrevBtn" ${this.currentResultIndex === 0 ? 'disabled' : ''} style="background: none; border: none; font-size: 22px; cursor: pointer; color: #ea5656; opacity: ${this.currentResultIndex === 0 ? '0.4' : '1'}; display: flex; align-items: center; justify-content: center;">
+          <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'><polyline points='15 18 9 12 15 6'></polyline></svg>
+        </button>
+        <span style="font-size: 15px; font-weight: 600; color: #ea5656;">${this.currentResultIndex + 1} / ${this.refinedPrompts.length}</span>
+        <button id="resultNextBtn" ${this.currentResultIndex === this.refinedPrompts.length - 1 ? 'disabled' : ''} style="background: none; border: none; font-size: 22px; cursor: pointer; color: #ea5656; opacity: ${this.currentResultIndex === this.refinedPrompts.length - 1 ? '0.4' : '1'}; display: flex; align-items: center; justify-content: center;">
+          <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'><polyline points='9 6 15 12 9 18'></polyline></svg>
+        </button>
+      </div>
+      <div class="result-card">
         <div class="result-header">
-          <span class="result-title">Suggestion ${index + 1}</span>
-          ${ratingDisplay}
+          <span class="result-title">Suggestion ${this.currentResultIndex + 1}</span>
+          <span class="rating">${prompt.rating ? prompt.rating + '/10' : ''}</span>
         </div>
         <div class="result-text">${prompt.promptText.replace(/\n/g, '<br>')}</div>
-        <button class="copy-button" data-text="${this.escapeHtml(prompt.promptText)}">
-          Copy
-        </button>
-        <button class="refine-again-button" data-text="${this.escapeHtml(prompt.promptText)}">
-          Refine Again
-        </button>
-      `;
-      
-      const copyButton = resultCard.querySelector('.copy-button');
-      copyButton.addEventListener('click', () => this.copyToClipboard(copyButton, prompt.promptText));
-
-      const refineAgainButton = resultCard.querySelector('.refine-again-button');
-      refineAgainButton.addEventListener('click', () => {
-        this.inputText.value = prompt.promptText;
-        this.resultsDiv.innerHTML = ''; 
-        this.inputText.focus();
-        this.showError('Prompt loaded for further refinement. Edit and click "Refine Prompt".');
-      });
-      
-      this.resultsDiv.appendChild(resultCard);
+        <button class="copy-button" data-text="${this.escapeHtml(prompt.promptText)}">Copy</button>
+        <button class="refine-again-button" data-text="${this.escapeHtml(prompt.promptText)}">Refine Again</button>
+      </div>
+    `;
+    // Add event listeners for navigation and actions
+    const prevBtn = document.getElementById('resultPrevBtn');
+    const nextBtn = document.getElementById('resultNextBtn');
+    if (prevBtn) prevBtn.addEventListener('click', () => {
+      if (this.currentResultIndex > 0) {
+        this.currentResultIndex--;
+        this.renderCurrentResult();
+      }
+    });
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+      if (this.currentResultIndex < this.refinedPrompts.length - 1) {
+        this.currentResultIndex++;
+        this.renderCurrentResult();
+      }
+    });
+    const copyButton = this.resultsDiv.querySelector('.copy-button');
+    if (copyButton) copyButton.addEventListener('click', () => this.copyToClipboard(copyButton, prompt.promptText));
+    const refineAgainButton = this.resultsDiv.querySelector('.refine-again-button');
+    if (refineAgainButton) refineAgainButton.addEventListener('click', () => {
+      this.inputText.value = prompt.promptText;
+      this.resultsDiv.innerHTML = '';
+      this.inputText.focus();
+      this.showError('Prompt loaded for further refinement. Edit and click "Refine Prompt".');
     });
   }
 
@@ -510,13 +549,8 @@ class PromptWeaverRefine {
     }
   }
 
-  updateCustomStyleSummary() {
+  showCustomStyleSummary(show = true) {
     if (!this.customStyleSummary) return;
-    if (this.promptLevel.value !== 'Custom') {
-      this.customStyleSummary.style.display = 'none';
-      this.customStyleSummary.innerHTML = '';
-      return;
-    }
     const selected = [
       this.structureStyle.value,
       this.toneStyle.value,
@@ -524,13 +558,106 @@ class PromptWeaverRefine {
       this.aiOptimizationStyle.value,
       this.audienceStyle.value
     ].filter(Boolean);
-    if (selected.length === 0) {
+    if (selected.length === 0 || !show) {
       this.customStyleSummary.style.display = 'none';
       this.customStyleSummary.innerHTML = '';
       return;
     }
     this.customStyleSummary.style.display = '';
     this.customStyleSummary.innerHTML = selected.map(style => `<span style="color:#ea5656;font-weight:600;background:#f25b5b22;padding:2px 8px;border-radius:12px;margin-right:4px;">#${style}</span>`).join(' ');
+  }
+
+  // Theme logic
+  applyTheme(theme) {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.style.setProperty('--bg-main', '#18181b');
+      root.style.setProperty('--bg-panel', '#232326');
+      root.style.setProperty('--text-main', '#f3f3f7');
+      root.style.setProperty('--text-label', '#bdbdc2');
+      root.style.setProperty('--border-main', '#33343a');
+      root.style.setProperty('--button-main', '#ea5656');
+      root.style.setProperty('--button-text', '#fff');
+      root.style.setProperty('--select-bg', '#232326');
+      root.style.setProperty('--select-text', '#f3f3f7');
+    } else {
+      root.style.setProperty('--bg-main', '#fff');
+      root.style.setProperty('--bg-panel', '#fff');
+      root.style.setProperty('--text-main', '#232326');
+      root.style.setProperty('--text-label', '#444');
+      root.style.setProperty('--border-main', '#d1d5db');
+      root.style.setProperty('--button-main', '#ea5656');
+      root.style.setProperty('--button-text', '#fff');
+      root.style.setProperty('--select-bg', '#fff');
+      root.style.setProperty('--select-text', '#232326');
+    }
+    document.body.style.background = 'var(--bg-main)';
+    // Update all relevant elements
+    const panel = document.getElementById('customizePanel');
+    if (panel) {
+      panel.style.background = 'var(--bg-panel)';
+      panel.style.color = 'var(--text-main)';
+      panel.style.borderColor = 'var(--border-main)';
+    }
+    const selects = document.querySelectorAll('.select');
+    selects.forEach(sel => {
+      sel.style.background = 'var(--select-bg)';
+      sel.style.color = 'var(--select-text)';
+      sel.style.borderColor = 'var(--border-main)';
+      sel.style.setProperty('color', 'var(--select-text)', 'important');
+      sel.style.setProperty('background', 'var(--select-bg)', 'important');
+    });
+    const textareas = document.querySelectorAll('.textarea');
+    textareas.forEach(ta => {
+      ta.style.background = 'var(--select-bg)';
+      ta.style.color = 'var(--select-text)';
+      ta.style.borderColor = 'var(--border-main)';
+      ta.style.setProperty('color', 'var(--select-text)', 'important');
+      ta.style.setProperty('background', 'var(--select-bg)', 'important');
+    });
+    const labels = document.querySelectorAll('.label');
+    labels.forEach(lab => {
+      lab.style.color = 'var(--text-label)';
+      lab.style.setProperty('color', 'var(--text-label)', 'important');
+    });
+    const buttons = document.querySelectorAll('.button');
+    buttons.forEach(btn => {
+      btn.style.background = 'var(--button-main)';
+      btn.style.color = 'var(--button-text)';
+      btn.style.border = 'none';
+    });
+    const resultCards = document.querySelectorAll('.result-card');
+    resultCards.forEach(card => {
+      card.style.background = 'var(--bg-panel)';
+      card.style.color = 'var(--text-main)';
+      card.style.borderColor = 'var(--border-main)';
+      card.style.setProperty('color', 'var(--text-main)', 'important');
+      card.style.setProperty('background', 'var(--bg-panel)', 'important');
+    });
+    // Remove any debug styles from theme toggle button
+    const themeBtn = document.querySelector('.theme-toggle-button');
+    if (themeBtn) {
+      themeBtn.style.border = '1px solid var(--border-main)';
+      themeBtn.style.background = 'var(--bg-panel)';
+      themeBtn.style.color = 'var(--text-main)';
+    }
+  }
+  storeTheme(theme) {
+    try { localStorage.setItem('promptweaver_theme', theme); } catch(e) {}
+  }
+  getStoredTheme() {
+    try { return localStorage.getItem('promptweaver_theme'); } catch(e) { return null; }
+  }
+  updateThemeToggleIcon() {
+    if (!this.themeToggleIcon) return;
+    const theme = this.getStoredTheme() || 'dark';
+    if (theme === 'dark') {
+      // Moon icon
+      this.themeToggleIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"></path>`;
+    } else {
+      // Sun icon
+      this.themeToggleIcon.innerHTML = `<circle cx="12" cy="12" r="5"></circle><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m16.95 6.95-1.41-1.41M6.34 6.34 4.93 4.93m12.02 0-1.41 1.41M6.34 17.66l-1.41 1.41"></path>`;
+    }
   }
 }
 

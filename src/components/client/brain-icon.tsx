@@ -1,8 +1,8 @@
-
 "use client";
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { useMagnetic } from './useMagnetic';
 
 interface BrainIconProps {
   className?: string;
@@ -30,3 +30,12 @@ const BrainIcon: React.FC<BrainIconProps> = ({ className }) => {
 };
 
 export default BrainIcon;
+
+export const MagneticBrainIcon: React.FC<BrainIconProps> = ({ className }) => {
+  const ref = useMagnetic();
+  return (
+    <div ref={ref} style={{ display: 'inline-block', transition: 'transform 0.2s' }}>
+      <BrainIcon className={className} />
+    </div>
+  );
+};

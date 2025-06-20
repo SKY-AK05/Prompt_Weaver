@@ -9,8 +9,9 @@ import LightbulbIcon from '@/components/client/lightbulb-icon'; // Keep existing
 import QuestionMarkIcon from '@/components/client/question-mark-icon';
 import BrainIllustrationIcon from '@/components/client/brain-illustration-icon';
 import { Brain, Wand2, Lightbulb as LucideLightbulb } from 'lucide-react'; // Added Lucide icons
-import MouseTrailAnimation from '@/components/client/mouse-trail-animation'; // Import the mouse trail
 import { AuthProvider } from '@/components/layout/app-header';
+import MagneticFloatingIcons from '@/components/client/MagneticFloatingIcons';
+import WaterRippleCanvas from '@/components/client/WaterRippleCanvas';
 
 export const metadata: Metadata = {
   title: 'PromptWeaver',
@@ -30,7 +31,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col bg-background text-foreground">
-        <MouseTrailAnimation /> {/* Add the mouse trail component here */}
+        <WaterRippleCanvas />
+        <MagneticFloatingIcons />
+        {/* <MouseTrailAnimation /> */}
         {/* Global Decorative Icons Container */}
         <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
           {/* Existing Pen Icons */}
