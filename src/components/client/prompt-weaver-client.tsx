@@ -26,7 +26,7 @@ import { MessageSquareWarning } from "lucide-react";
 import { Grid } from 'ldrs/react';
 import 'ldrs/react/Grid.css';
 import { frameworks } from '@/lib/frameworks';
-import { frameworkRefinement } from '@/ai/flows/framework-refinement';
+import { Switch } from '@/components/ui/switch';
 
 type UiPromptLevel = 'Simple' | 'Moderate' | 'Expert' | 'Custom';
 const uiPromptLevels: { value: UiPromptLevel; label: string; apiValue: 'Quick' | 'Balanced' | 'Comprehensive'; }[] = [
@@ -79,6 +79,53 @@ interface RefinedPrompt {
 interface PromptWeaverClientProps {
   isLoggedIn: boolean;
 }
+
+interface PromptSuggestionCardProps {
+  prompt: string;
+  rating: number;
+  index: number;
+  onCopy: (prompt: string) => void;
+  onRefineAgain: (prompt: string) => void;
+}
+
+const PromptSuggestionCard: React.FC<PromptSuggestionCardProps> = ({ prompt, rating, index, onCopy, onRefineAgain }) => {
+  return (
+    <Card className="mb-4 bg-card border-border">
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg font-semibold text-card-foreground">Suggestion {index + 1}</CardTitle>
+          <div className="flex items-center text-primary">
+            <StarIcon className="w-5 h-5 mr-1" />
+            <span className="font-bold text-lg">{rating}/10</span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground mb-4 whitespace-pre-wrap">{prompt}</p>
+        <div className="flex gap-2">
+          <Button  
+            variant="secondary"
+            size="sm" 
+            onClick={() => onCopy(prompt)} 
+            className="hover:bg-accent hover:text-accent-foreground"
+          >
+            <Copy className="w-4 h-4 mr-2" />
+            Copy
+          </Button>
+          <Button 
+            variant="secondary"
+            size="sm" 
+            onClick={() => onRefineAgain(prompt)} 
+            className="hover:bg-accent hover:text-accent-foreground"
+          >
+            <RefreshCcw className="w-4 h-4 mr-2" />
+            Refine Again
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 // Framework categories mapping
 const frameworkCategories = [
@@ -145,6 +192,18 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
   const [recommendedFramework, setRecommendedFramework] = React.useState<{ name: string; reason: string } | null>(null);
   const [frameworkRefinedPrompts, setFrameworkRefinedPrompts] = React.useState<string[]>([]);
   const [isFrameworkRefining, setIsFrameworkRefining] = React.useState(false);
+  const [enableFrameworkRefinement, setEnableFrameworkRefinement] = React.useState(false);
+  const [guestAttemptCount, setGuestAttemptCount] = React.useState(0);
+  const GUEST_ATTEMPT_LIMIT = 3;
+
+  React.useEffect(() => {
+    if (!isLoggedIn) {
+      const storedCount = localStorage.getItem('guestAttemptCount');
+      if (storedCount) {
+        setGuestAttemptCount(Number(storedCount));
+      }
+    }
+  }, [isLoggedIn]);
 
   const examplePrompts = [
     "Write a cold email to pitch my AI startup idea to an investor",
@@ -180,6 +239,15 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
   ].filter(Boolean);
 
   const handleRefinePrompt = async () => {
+    if (!isLoggedIn && guestAttemptCount >= GUEST_ATTEMPT_LIMIT) {
+      setError(null); // Clear other errors, the persistent alert will guide the user
+      toast({
+          title: "Free Limit Reached",
+          description: "Please log in to get unlimited refinements.",
+          variant: "destructive",
+      });
+      return;
+    }
     if (!inputText.trim()) {
       setError('Please enter an idea to refine.');
       return;
@@ -219,6 +287,11 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
         setError('The AI (Google Gemini) did not return any prompt suggestions with valid ratings. You can try rephrasing your idea or trying again.');
       } else {
         setRefinedPrompts(result.refinedPrompts || []);
+        if (!isLoggedIn) {
+          const newCount = guestAttemptCount + 1;
+          setGuestAttemptCount(newCount);
+          localStorage.setItem('guestAttemptCount', String(newCount));
+        }
         // Auto-save the generated prompt to the database for logged-in users
         if (user) {
           const createdAt = new Date();
@@ -249,17 +322,13 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
             setShowTemporarySaveWarning(true);
           }
         }
-        // Double-refinement for Expert level
-        if (selectedFramework) {
+        // Double-refinement for any enabled level
+        if (enableFrameworkRefinement) {
           setIsFrameworkRefining(true);
-          // Use selectedFramework or AI-chosen framework
           let frameworkName = frameworks.find(fw => fw.id === selectedFramework)?.name || 'R-T-F';
-          // Mock second AI call for each prompt
           Promise.all(
             (result.refinedPrompts || []).map(async (p, idx) => {
-              // Simulate API call delay
               await new Promise(res => setTimeout(res, 800 + idx * 200));
-              // Mock: "Refined with [frameworkName]: [original prompt]"
               return `(${frameworkName}) ${p.promptText} [Refined with ${frameworkName}]`;
             })
           ).then(frPrompts => {
@@ -326,7 +395,14 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
 
   const handleSavePrompt = async () => {
     if (!isLoggedIn || !user) return;
-    if (refinedPrompts.length === 0 || !lastAutoSavedPromptId) return;
+    if (refinedPrompts.length === 0) {
+      toast({ title: "Nothing to Save", description: "Please refine a prompt first.", variant: "destructive" });
+      return;
+    }
+    if (!lastAutoSavedPromptId) {
+      toast({ title: "Save Failed", description: "Could not save the prompt because the initial temporary save failed. Please try refining again.", variant: "destructive" });
+      return;
+    }
     try {
       const { error } = await supabase.from("prompts")
         .update({ is_temporary: false })
@@ -440,6 +516,9 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
     }
   };
   
+  // Find the selected framework name for use in the heading
+  const selectedFrameworkName = frameworks.find(fw => fw.id === selectedFramework)?.name || selectedFramework;
+  
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center max-w-full space-y-8 relative isolate">
       {/* SAVED Popup */}
@@ -503,10 +582,19 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
                   </div>
                 </div>
               </div>
-              {/* Prompt Framework Dropdown for Expert Level */}
-              {uiPromptLevel === 'Expert' && (
+              {/* Framework refinement toggle and UI for all levels */}
+              <div className="flex items-center gap-3 mb-2">
+                <Switch
+                  checked={enableFrameworkRefinement}
+                  onCheckedChange={setEnableFrameworkRefinement}
+                  id="framework-refine-toggle"
+                />
+                <label htmlFor="framework-refine-toggle" className="text-sm font-medium text-foreground select-none cursor-pointer">
+                  Refine based on framework
+                </label>
+              </div>
+              {enableFrameworkRefinement && (
                 <div className="flex flex-col gap-4">
-                  {/* AI Suggestion Button */}
                   <Button onClick={handleSuggestFramework} disabled={!inputText.trim()} className="w-fit self-start">
                     🤖 Let AI Suggest Framework
                   </Button>
@@ -516,7 +604,6 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
                     </div>
                   )}
                   <label className="block text-sm font-medium text-foreground mb-2 text-left">Select Prompt Framework</label>
-                  {/* Category Dropdown */}
                   <Select value={selectedCategory} onValueChange={(cat) => {
                     setSelectedCategory(cat);
                     setSelectedFramework(cat === 'Quick Tasks & Productivity' ? 'rtf' : '');
@@ -531,7 +618,6 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
                       ))}
                     </SelectContent>
                   </Select>
-                  {/* Framework Dropdown (only if a category is selected and not AI) */}
                   {selectedCategory && selectedCategory !== 'ai' && (
                     <Select value={selectedFramework} onValueChange={setSelectedFramework}>
                       <SelectTrigger className="w-full text-sm py-2 rounded-md mt-2">
@@ -631,15 +717,13 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button 
                   onClick={handleRefinePrompt} 
-                  disabled={isLoading || !inputText.trim()} 
+                  disabled={isLoading || !inputText.trim() || (!isLoggedIn && guestAttemptCount >= GUEST_ATTEMPT_LIMIT)} 
                   className="flex-1 text-lg py-3 bg-accent hover:bg-accent/90 text-accent-foreground rounded-md shadow-md hover:shadow-lg transition-shadow flex items-center justify-center"
                   aria-label={isLoading ? "Refining idea" : "Refine My Idea"}
                 >
                   {isLoading ? (
                     <>
-                      <span className="flex items-center justify-center mr-3">
-                        <Grid size={32} speed={1.5} color="black" />
-                      </span>
+                      <Sparkles className="mr-2 h-5 w-5" />
                       Refining...
                     </>
                   ) : (
@@ -655,7 +739,7 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
                       <div className={cn(!isLoggedIn && "cursor-not-allowed")}> 
                         <Button 
                           onClick={handleSavePrompt} 
-                          disabled={!isLoggedIn || isLoading}
+                          disabled={!isLoggedIn || isLoading || refinedPrompts.length === 0}
                           variant="outline"
                           className={cn(
                             "flex-1 text-lg py-3 rounded-md shadow-md hover:shadow-lg transition-shadow flex items-center justify-center",
@@ -677,6 +761,20 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
                   </Tooltip>
                 </TooltipProvider>
               </div>
+              {!isLoggedIn && guestAttemptCount < GUEST_ATTEMPT_LIMIT && (
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  You have {Math.max(0, GUEST_ATTEMPT_LIMIT - guestAttemptCount)} free refinements remaining.
+                </p>
+              )}
+              {!isLoggedIn && guestAttemptCount >= GUEST_ATTEMPT_LIMIT && (
+                <Alert variant="destructive" className="mt-4">
+                    <Lock className="h-4 w-4" />
+                    <AlertTitle>Free Limit Reached</AlertTitle>
+                    <AlertDescription>
+                        Please log in to get unlimited refinements and save your prompts.
+                    </AlertDescription>
+                </Alert>
+              )}
               {error && <p className="text-sm text-destructive mt-2 p-2 bg-destructive/10 rounded-md">{error}</p>}
             </CardContent>
           </Card>
@@ -694,59 +792,31 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
         {/* RIGHT COLUMN: results card */}
         <div className="w-full lg:w-1/2 flex flex-col gap-8">
           {refinedPrompts.length > 0 && (
-            <Card className="shadow-lg rounded-xl w-full mx-auto">
+            <Card className="shadow-lg rounded-xl w-full mx-auto bg-card">
               <CardHeader>
-                <CardTitle className="text-2xl font-headline text-primary">Refined Prompt Suggestions</CardTitle>
-                <CardDescription>Here are a few variations with ratings. Copy one or refine it again!</CardDescription>
+                <CardTitle className="text-2xl font-headline text-primary text-center">✨ Refined Suggestions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {refinedPrompts.map((p, idx) => (
-                  <div key={idx} className="mb-4 p-3 rounded bg-muted/60 border border-primary/10">
-                    <div className="font-semibold mb-1">Expert-level Prompt {idx + 1} <span className="text-xs text-muted-foreground">(Rating: {p.rating}/10)</span></div>
-                    <div className="whitespace-pre-line text-sm">{p.promptText}</div>
-                  </div>
+              <CardContent>
+                {refinedPrompts.map((p, index) => (
+                  <PromptSuggestionCard
+                    key={index}
+                    index={index}
+                    prompt={p.promptText}
+                    rating={p.rating}
+                    onCopy={handleCopyToClipboard}
+                    onRefineAgain={handleRefineAgain}
+                  />
                 ))}
-                {/* Add Refine Based on Framework Button */}
-                <Button
-                  onClick={async () => {
-                    if (!selectedFramework) return;
-                    setIsFrameworkRefining(true);
-                    setFrameworkRefinedPrompts([]);
-                    const frameworkObj = frameworks.find(fw => fw.id === selectedFramework);
-                    if (frameworkObj) {
-                      const frPrompts = await Promise.all(
-                        refinedPrompts.map(async (p) => {
-                          try {
-                            const refined = await frameworkRefinement({
-                              promptText: p.promptText,
-                              framework: frameworkObj.name,
-                              frameworkStructure: frameworkObj.structure
-                            });
-                            return `${refined.frameworkRefinedPrompt}\n\n${refined.frameworkExplanation}`;
-                          } catch (err) {
-                            return `Framework refinement failed.`;
-                          }
-                        })
-                      );
-                      setFrameworkRefinedPrompts(frPrompts);
-                    }
-                    setIsFrameworkRefining(false);
-                  }}
-                  disabled={isFrameworkRefining || !selectedFramework}
-                  className="w-full mt-2"
-                >
-                  {isFrameworkRefining ? 'Refining with Framework...' : 'Refine Based on Framework'}
-                </Button>
                 {/* Framework-refined prompts */}
-                {frameworkRefinedPrompts.length > 0 && (
+                {enableFrameworkRefinement && frameworkRefinedPrompts.length > 0 && (
                   <div className="mt-6">
-                    <div className="text-lg font-bold mb-2 text-primary">Framework-Refined Prompts</div>
+                    <div className="text-lg font-bold mb-2 text-primary">Framework-{selectedFrameworkName} Prompts</div>
                     {isFrameworkRefining && (
                       <div className="text-sm text-muted-foreground mb-2">Refining prompts using the selected framework...</div>
                     )}
                     {frameworkRefinedPrompts.map((fr, idx) => (
                       <div key={idx} className="mb-4 p-3 rounded bg-muted border border-primary/20">
-                        <div className="font-semibold mb-1">Framework-Refined Prompt {idx + 1}</div>
+                        <div className="font-semibold mb-1">Framework-{selectedFrameworkName} Prompt {idx + 1}</div>
                         <div className="whitespace-pre-line text-sm">{fr}</div>
                       </div>
                     ))}

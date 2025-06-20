@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { callOpenRouter } from '@/utils/openrouter';
 
 const RefinePromptInputSchema = z.object({
   instruction: z
@@ -64,19 +65,24 @@ Please incorporate these characteristics into your prompt suggestions. If multip
 Based on the 'promptLevel', generate the array of prompt variations as follows:
 
 1.  **If 'promptLevel' is 'Quick':**
-    *   Generate 2-3 concise and direct prompts.
+    *   Generate 3 short, actionable prompts.
     *   Focus on brevity and immediate usability.
+    *   Minimal context or formatting hints.
+    *   Minimum of 25 words per prompt.
     *   Provide a rating (0-10) for each.
 
 2.  **If 'promptLevel' is 'Balanced':**
-    *   Generate 2-3 moderately detailed prompts.
+    *   Generate 3 moderately detailed prompts.
     *   Incorporate relevant context.
     *   Suggest a desired output format or length.
+    *   Minimum of 50 words per prompt.
     *   Provide a rating (0-10) for each.
 
 3.  **If 'promptLevel' is 'Comprehensive':**
-    *   Generate 2-3 highly detailed prompts.
+    *   Generate 2 highly detailed prompts.
     *   Rich in context, with explicit instructions on format, style.
+    *   Add deep context, goals, tone, format expectations, and examples where appropriate.
+    *   Minimum of 100 words per prompt.
     *   Provide a rating (0-10) for each.
 
 Your output MUST be a JSON object with a single key "refinedPrompts" which is an array of 2-3 objects. Each object must have a "promptText" (string for the prompt itself) and "rating" (a number between 0 and 10 for its quality). For example:

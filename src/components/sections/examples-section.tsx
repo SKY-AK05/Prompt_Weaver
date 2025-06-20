@@ -1,10 +1,10 @@
-
 "use client";
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ArrowRight, Sparkles, PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from 'next/navigation';
 
 const exampleData = [
   {
@@ -43,6 +43,7 @@ export default function ExamplesSection() {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [showAfterContent, setShowAfterContent] = React.useState(false);
   const intervalIdRef = React.useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
   const currentExample = exampleData[currentIndex];
 
@@ -109,21 +110,11 @@ export default function ExamplesSection() {
     resetInterval();
   };
 
-  const handleGetStartedClick = () => {
-    const section = document.getElementById('prompt-tool');
-    if (section) {
-      // If tool is already rendered, just scroll to it.
-      section.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      // If tool is not rendered (either hidden on homepage or user is on another page),
-      // navigate to the homepage with the hash.
-      // The homepage (page.tsx) will have a useEffect to detect this hash
-      // and then call its own logic to show and scroll to the tool.
-      if (typeof window !== "undefined") { 
-          window.location.href = '/#prompt-tool';
-      }
-    }
+  const handleNavigate = () => {
+    router.push('/tool');
   };
+
+  const [copiedStates, setCopiedStates] = React.useState<boolean[]>(Array(6).fill(false));
 
   return (
     <section className="w-full pt-4 md:pt-6 pb-12 md:pb-16">
@@ -202,19 +193,24 @@ export default function ExamplesSection() {
           </div>
         </div>
 
-        <div className="mt-12 md:mt-16 flex justify-center">
-          <div className="bg-card p-3 rounded-full shadow-lg flex items-center space-x-3 max-w-md">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <p className="text-sm font-medium text-foreground">
-              Try PromptWeaver yourself
-            </p>
-            <Button
-              onClick={handleGetStartedClick}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-full text-sm font-semibold"
-              aria-label="Get Started with PromptWeaver"
-            >
-              Get Started
-            </Button>
+        <div className="mt-12 text-center">
+          <div className="inline-flex items-center justify-center rounded-full bg-background p-2 shadow-md">
+            <div className="flex items-center gap-4">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </span>
+              <p className="text-foreground text-base md:text-lg font-medium">
+                Try PromptWeaver yourself
+              </p>
+              <Button
+                size="lg"
+                className="text-lg rounded-full"
+                onClick={handleNavigate}
+              >
+                Get Started
+              </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PenLine, Sparkles, BookOpen, SlidersHorizontal, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 
 const featuresContent = [
   {
@@ -14,7 +14,6 @@ const featuresContent = [
     title: "Why Choose PromptWeaver?",
     description: "Discover how PromptWeaver transforms your AI experience. Whether you're just starting or want to write like a pro, we make powerful prompting simple, smart, and effective.",
     buttonText: "Try PromptWeaver Now",
-    buttonLink: "prompt-tool" // This link will be used by the updated onClick
   },
   {
     id: "effortless-creation",
@@ -54,6 +53,12 @@ const featuresContent = [
 ];
 
 export default function FeaturesSection() {
+  const router = useRouter();
+
+  const handleNavigate = () => {
+    router.push('/tool');
+  };
+
   return (
     <section className="w-full py-12 md:py-16">
       <div className="container mx-auto px-4 md:px-6">
@@ -68,27 +73,15 @@ export default function FeaturesSection() {
                   <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
                     {item.description}
                   </p>
-                  <Button
-                    size="lg"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground self-start px-8 py-3 text-lg"
-                    onClick={() => {
-                      if (item.buttonLink === "prompt-tool") {
-                        if (typeof window !== "undefined") {
-                          window.location.href = '/#prompt-tool';
-                        }
-                      } else {
-                        // Handle other button links if any
-                        const section = document.getElementById(item.buttonLink);
-                        if (section) {
-                          section.scrollIntoView({ behavior: 'smooth' });
-                        } else {
-                          console.warn(`Button target section "${item.buttonLink}" not found.`);
-                        }
-                      }
-                    }}
-                  >
-                    {item.buttonText}
-                  </Button>
+                  <div className="mt-6 flex justify-start text-left">
+                    <Button
+                      className="text-lg"
+                      size="lg"
+                      onClick={handleNavigate}
+                    >
+                      {item.buttonText}
+                    </Button>
+                  </div>
                 </div>
               );
             } else { // type === "card"

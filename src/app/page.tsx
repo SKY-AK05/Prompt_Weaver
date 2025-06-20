@@ -22,7 +22,6 @@ export default function SinglePageHome() {
   const { user } = useAuth();
   const [showSplashScreen, setShowSplashScreen] = React.useState(true);
   const [isLoggedInForTool, setIsLoggedInForTool] = React.useState(false);
-  const [showPromptTool, setShowPromptTool] = React.useState(false);
 
   // States for hero entry animations
   const [startHeroAnimations, setStartHeroAnimations] = React.useState(false); // True after splash
@@ -133,41 +132,6 @@ export default function SinglePageHome() {
     };
   }, []);
 
-  const handleTryNowClick = React.useCallback(() => {
-    setShowPromptTool(true);
-    // Use a longer timeout to ensure the section is fully rendered
-    setTimeout(() => {
-      const section = document.getElementById('prompt-tool');
-      if (section) {
-        // First scroll to the top of the page to ensure proper scroll behavior
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        // Then scroll to the section after a short delay
-        setTimeout(() => {
-          section.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      }
-    }, 200);
-  }, []);
-
-  React.useEffect(() => {
-    const checkHashAndTriggerTool = () => {
-      if (typeof window !== "undefined" && window.location.hash === '#prompt-tool') {
-        handleTryNowClick();
-      }
-    };
-  
-    // Check on initial mount
-    checkHashAndTriggerTool(); 
-  
-    // Listen for subsequent hash changes
-    window.addEventListener('hashchange', checkHashAndTriggerTool, false);
-  
-    return () => {
-      window.removeEventListener('hashchange', checkHashAndTriggerTool, false);
-    };
-  }, [handleTryNowClick]);
-
-
   return (
     <div className="flex flex-col flex-1 w-full bg-background text-foreground">
       {showSplashScreen ? (
@@ -240,9 +204,11 @@ export default function SinglePageHome() {
                 <Button
                   size="lg"
                   className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg px-8 py-3 text-lg"
-                  onClick={handleTryNowClick}
+                  asChild
                 >
-                  Try Now
+                  <Link href="/tool">
+                    Try Now
+                  </Link>
                 </Button>
                 <Button
                   size="lg"
@@ -258,14 +224,6 @@ export default function SinglePageHome() {
             </div>
           </div>
         </section>
-
-        {showPromptTool && (
-          <section id="prompt-tool" className="w-full py-16 md:py-24">
-            <div className="container mx-auto px-4 md:px-6">
-              <PromptWeaverClient isLoggedIn={!!user} />
-            </div>
-          </section>
-        )}
         
         <section id="features" ref={featuresRef} className="w-full pb-16 md:pb-24 bg-secondary/10">
           <div className={cn(

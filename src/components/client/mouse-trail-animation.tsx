@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -6,7 +5,8 @@ import { cn } from '@/lib/utils'; // cn might not be needed if not applying cond
 
 const MILKY_WHITE_COLOR = '#F5F5F5';
 const BLACK_COLOR = '#000000';
-const NUM_CIRCLES = 15; // Number of circles in the trail
+const NUM_CIRCLES = 10; // Number of circles in the trail
+const CIRCLE_SIZE = 16; // Smaller circle size
 
 const MouseTrailAnimation = () => {
   const coords = useRef({ x: 0, y: 0 });
@@ -67,11 +67,11 @@ const MouseTrailAnimation = () => {
         const dX = leaderX - currentX;
         const dY = leaderY - currentY;
 
-        circle.x += dX * 0.3; 
-        circle.y += dY * 0.3;
+        circle.x += dX * 0.05; // Even slower movement
+        circle.y += dY * 0.05;
 
-        circle.style.left = `${circle.x - 12}px`; // 12 is half of 24px width
-        circle.style.top = `${circle.y - 12}px`;  // 12 is half of 24px height
+        circle.style.left = `${circle.x - CIRCLE_SIZE / 2}px`;
+        circle.style.top = `${circle.y - CIRCLE_SIZE / 2}px`;
         
         // Scale based on position in the trail
         const scale = (NUM_CIRCLES - index) / NUM_CIRCLES;
@@ -103,10 +103,11 @@ const MouseTrailAnimation = () => {
           ref={(el) => {
             if (el) circles.current[index] = el as typeof circles.current[0];
           }}
-          className="trail-circle" // CSS class defines base size, border-radius, position, pointer-events, z-index
+          className="trail-circle"
           style={{
-            backgroundColor: trailElementColor, // Dynamic color based on theme
-            // Opacity can also be set here if not tied to scale, or managed by scale as above
+            backgroundColor: trailElementColor,
+            width: CIRCLE_SIZE,
+            height: CIRCLE_SIZE,
           }}
         />
       ))}
