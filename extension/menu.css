@@ -1,0 +1,196 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #121212; /* Dark background */
+  color: #E0E0E0; /* Light text */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background Decorative Elements - Outlined Shapes */
+/* Using simple CSS shapes to mimic the style */
+body::before, body::after, .extra-deco-1, .extra-deco-2 {
+  /* Removed decorative shapes */
+  content: none;
+}
+
+body::before { /* Rotated square / diamond */
+  width: 50px;
+  height: 50px;
+  border-width: 2px;
+  top: 15%;
+  left: 10%;
+  transform: rotate(45deg) skew(10deg, 10deg);
+}
+
+body::after { /* Outlined circle */
+  width: 35px;
+  height: 35px;
+  border-width: 2px;
+  border-radius: 50%;
+  bottom: 10%;
+  right: 12%;
+  transform: rotate(-10deg);
+}
+
+/* Added two more pseudo-elements via divs for more decoration if needed, or style these directly */
+/* Example: A simple line or another shape */
+.menu-container::before, .menu-container::after {
+  /* Removed decorative shapes */
+  content: none;
+}
+
+.menu-container {
+  background-color: #121212;
+  padding: 8px 20px 20px 20px; /* Reduced top padding */
+  border-radius: 12px;
+  text-align: center;
+  max-width: 380px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px; /* Reduced margin */
+  padding: 0 10px;
+}
+
+.logo {
+  width: 36px; 
+  height: 36px;
+  margin-right: 8px; /* Space between logo and title */
+}
+
+.title {
+  font-size: 22px; /* Slightly reduced */
+  font-weight: bold;
+  color: #FFFFFF; 
+  text-align: left; /* Align title to left next to logo */
+  flex-grow: 1; /* Allow title to take available space */
+}
+
+.logout-button {
+  padding: 8px; 
+  background-color: transparent; /* Transparent background */
+  color: #E53E3E; /* Accent color for icon */
+  border: none; /* No border */
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; 
+  height: 38px; 
+}
+.logout-button:hover {
+  color: #F28B8B; /* Lighter accent on hover */
+}
+.button-icon-svg { /* Ensure this is styled for the logout icon */
+  width: 22px; /* Increased size for logout icon */
+  height: 22px;
+  display: block;
+}
+
+.error-message {
+  background-color: rgba(229, 62, 62, 0.15); 
+  color: #E53E3E; 
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(229, 62, 62, 0.3);
+}
+
+.menu-options {
+  display: flex;
+  flex-direction: column;
+  gap: 25px; /* Increased gap */
+}
+
+.menu-button {
+  background-color: #1E1E1E; 
+  color: #E0E0E0;
+  border: 1px solid #333333;
+  padding: 25px 20px; /* Increased padding */
+  border-radius: 16px; /* More rounded corners */
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+  display: flex; /* Use flex for icon and text alignment */
+  align-items: flex-start; /* Align items to the top */
+  gap: 15px; /* Gap between icon and text block */
+}
+
+.menu-button:hover {
+  background-color: #2C2C2C; /* Slightly lighter background on hover */
+  border-color: #E53E3E; 
+  transform: translateY(-3px); /* Slightly more lift */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.menu-button .button-icon-emoji.large-icon { 
+  font-size: 22px; /* Adjust icon size if needed */
+  line-height: 1;
+  color: #E53E3E; /* Accent color for icons */
+  margin-top: 2px; /* Fine-tune vertical alignment */
+}
+
+.menu-button .button-text {
+  font-size: 17px; /* Slightly smaller to fit design */
+  font-weight: bold; /* Bold title */
+  color: #FFFFFF; 
+  margin-bottom: 6px;
+}
+
+.menu-button .button-description {
+  font-size: 13px;
+  color: #A0A0A0; 
+  line-height: 1.5;
+}
+
+.menu-svg-icon {
+  width: 2.1rem;
+  height: 2.1rem;
+  display: inline-block;
+  vertical-align: middle;
+  margin-top: 2px;
+  margin-right: 0;
+  color: #E53E3E;
+  fill: #E53E3E;
+}
+
+.floating-bg-icon {
+  position: absolute;
+  z-index: 0;
+  opacity: 0.10;
+  pointer-events: none;
+  width: 120px;
+  height: 120px;
+  user-select: none;
+}
+.bg-icon-top-left {
+  top: 18px;
+  left: 18px;
+  transform: rotate(-18deg);
+}
+.bg-icon-bottom-right {
+  bottom: 18px;
+  right: 18px;
+  transform: rotate(14deg);
+}
+.bg-icon-center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1.3) rotate(-8deg);
+}

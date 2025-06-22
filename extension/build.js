@@ -12,8 +12,9 @@ function copyIcons() {
     fs.mkdirSync(iconsDir, { recursive: true });
   }
   
-  // Copy and rename logo files to standard icon sizes
-  const logoFile = path.join(assetsDir, 'logo-dark-theme.png');
+  // Use the new logo file name. Please ensure 'promptweaver-icon.png' exists in 'public/assets'.
+  // If your new logo file has a different name, please update it here.
+  const logoFile = path.join(assetsDir, 'promptweaver-icon.png'); 
   
   if (fs.existsSync(logoFile)) {
     // For now, just copy the same file to all sizes
@@ -22,16 +23,17 @@ function copyIcons() {
     
     iconSizes.forEach(size => {
       const targetFile = path.join(iconsDir, `icon-${size}.png`);
-      if (!fs.existsSync(targetFile)) {
+      if (!fs.existsSync(targetFile)) { // Only copy if it doesn't exist to avoid unnecessary writes
         fs.copyFileSync(logoFile, targetFile);
-        console.log(`Created icon-${size}.png`);
+        console.log(`Created icon-${size}.png from ${logoFile}`);
       }
     });
   } else {
-    console.log('Logo file not found. Please add icon files manually to /extension/icons/');
+    console.warn(`Warning: Logo file not found at ${logoFile}. Please add your new logo file to /public/assets/ and update the filename in extension/build.js if necessary. Default icons might not be updated.`);
   }
 }
 
 console.log('Building Chrome Extension...');
 copyIcons();
-console.log('Extension build complete! Ready to zip and upload to Chrome Web Store.');
+console.log('Extension build complete! Check the /extension/icons/ directory.');
+

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptWeaver - Magical Prompts</title>
+  <link rel="stylesheet" href="magical.css">
+  <script src="lib/supabase.js"></script>
+</head>
+<body>
+  <img src="icons/pen1.svg" class="floating-bg-icon bg-icon-top" alt="Pen background" />
+  <img src="icons/puzzle1.svg" class="floating-bg-icon bg-icon-center" alt="Puzzle background" />
+  <div class="container">
+    <div class="header">
+      <img src="icons/padded_icon-48.png" alt="PromptWeaver" class="logo">
+      <h1 class="title">Magical Prompts</h1>
+      <div class="header-actions">
+        <button id="backButton" class="back-button" aria-label="Back to Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="button-icon-svg"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button id="logoutButton" class="logout-button" aria-label="Logout">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="button-icon-svg"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        </button>
+      </div>
+    </div>
+    <div id="error" class="error-message" style="display: none;"></div>
+    <div id="categoryButtons" class="category-grid">
+      <!-- Categories will be loaded here -->
+    </div>
+    <div id="promptsDisplay" class="prompts-grid">
+      <!-- Prompts will be displayed here -->
+    </div>
+    <p id="usageInfo" class="usage-info"></p>
+  </div>
+  <script src="lib/supabase.js"></script>
+  <script src="lib/supabaseClient.js"></script>
+  <script src="magical.js"></script>
+</body>
+</html>
