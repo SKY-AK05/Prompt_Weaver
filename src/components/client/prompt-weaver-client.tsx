@@ -167,7 +167,7 @@ const frameworkCategories = [
   },
 ];
 
-export default function PromptWeaverClient() {
+export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientProps) {
   const { user } = useAuth();
   const [uiPromptLevel, setUiPromptLevel] = React.useState<UiPromptLevel>('Moderate');
   const [isCustomizing, setIsCustomizing] = React.useState(false);
@@ -197,13 +197,13 @@ export default function PromptWeaverClient() {
   const GUEST_ATTEMPT_LIMIT = 3;
 
   React.useEffect(() => {
-    if (!user) {
+    if (!isLoggedIn) {
       const storedCount = localStorage.getItem('guestAttemptCount');
       if (storedCount) {
         setGuestAttemptCount(Number(storedCount));
       }
     }
-  }, [user]);
+  }, [isLoggedIn]);
 
   const examplePrompts = [
     "Write a cold email to pitch my AI startup idea to an investor",
@@ -239,7 +239,7 @@ export default function PromptWeaverClient() {
   ].filter(Boolean);
 
   const handleRefinePrompt = async () => {
-    if (!user && guestAttemptCount >= GUEST_ATTEMPT_LIMIT) {
+    if (!isLoggedIn && guestAttemptCount >= GUEST_ATTEMPT_LIMIT) {
       setError(null); // Clear other errors, the persistent alert will guide the user
       toast({
           title: "Free Limit Reached",
@@ -287,7 +287,7 @@ export default function PromptWeaverClient() {
         setError('The AI (Google Gemini) did not return any prompt suggestions with valid ratings. You can try rephrasing your idea or trying again.');
       } else {
         setRefinedPrompts(result.refinedPrompts || []);
-        if (!user) {
+        if (!isLoggedIn) {
           const newCount = guestAttemptCount + 1;
           setGuestAttemptCount(newCount);
           localStorage.setItem('guestAttemptCount', String(newCount));
@@ -405,7 +405,7 @@ export default function PromptWeaverClient() {
   };
 
   const handleSavePrompt = async () => {
-    if (!user) return;
+    if (!isLoggedIn || !user) return;
     if (refinedPrompts.length === 0) {
       toast({ title: "Nothing to Save", description: "Please refine a prompt first.", variant: "destructive" });
       return;
@@ -728,7 +728,7 @@ export default function PromptWeaverClient() {
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button 
                   onClick={handleRefinePrompt} 
-                  disabled={isLoading || !inputText.trim() || (!user && guestAttemptCount >= GUEST_ATTEMPT_LIMIT)} 
+                  disabled={isLoading || !inputText.trim() || (!isLoggedIn && guestAttemptCount >= GUEST_ATTEMPT_LIMIT)} 
                   className="flex-1 text-lg py-3 bg-accent hover:bg-accent/90 text-accent-foreground rounded-md shadow-md hover:shadow-lg transition-shadow flex items-center justify-center"
                   aria-label={isLoading ? "Refining idea" : "Refine My Idea"}
                 >
@@ -747,24 +747,24 @@ export default function PromptWeaverClient() {
                 <TooltipProvider>
                   <Tooltip delayDuration={100}>
                     <TooltipTrigger asChild>
-                      <div className={cn(!user && "cursor-not-allowed")}> 
+                      <div className={cn(!isLoggedIn && "cursor-not-allowed")}> 
                         <Button 
                           onClick={handleSavePrompt} 
-                          disabled={!user || isLoading || refinedPrompts.length === 0}
+                          disabled={!isLoggedIn || isLoading || refinedPrompts.length === 0}
                           variant="outline"
                           className={cn(
                             "flex-1 text-lg py-3 rounded-md shadow-md hover:shadow-lg transition-shadow flex items-center justify-center",
-                            !user && "opacity-50 pointer-events-none"
+                            !isLoggedIn && "opacity-50 pointer-events-none"
                           )}
-                          aria-label={user ? "Save Prompt" : "Login to save prompt"}
+                          aria-label={isLoggedIn ? "Save Prompt" : "Login to save prompt"}
                         >
-                          {!user && <Lock className="mr-2 h-5 w-5" />}
-                          {user && <Save className="mr-2 h-5 w-5" />}
+                          {!isLoggedIn && <Lock className="mr-2 h-5 w-5" />}
+                          {isLoggedIn && <Save className="mr-2 h-5 w-5" />}
                           Save Prompt
                         </Button>
                       </div>
                     </TooltipTrigger>
-                    {!user && (
+                    {!isLoggedIn && (
                       <TooltipContent>
                         <p>🔒 Login to unlock saving prompts</p>
                       </TooltipContent>
@@ -772,12 +772,12 @@ export default function PromptWeaverClient() {
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              {!user && guestAttemptCount < GUEST_ATTEMPT_LIMIT && (
+              {!isLoggedIn && guestAttemptCount < GUEST_ATTEMPT_LIMIT && (
                 <p className="text-xs text-center text-muted-foreground mt-2">
                   You have {Math.max(0, GUEST_ATTEMPT_LIMIT - guestAttemptCount)} free refinements remaining.
                 </p>
               )}
-              {!user && guestAttemptCount >= GUEST_ATTEMPT_LIMIT && (
+              {!isLoggedIn && guestAttemptCount >= GUEST_ATTEMPT_LIMIT && (
                 <Alert variant="destructive" className="mt-4">
                     <Lock className="h-4 w-4" />
                     <AlertTitle>Free Limit Reached</AlertTitle>

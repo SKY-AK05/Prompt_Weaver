@@ -12,7 +12,6 @@ import { Brain, Wand2, Lightbulb as LucideLightbulb } from 'lucide-react'; // Ad
 import { AuthProvider } from '@/components/layout/app-header';
 import MagneticFloatingIcons from '@/components/client/MagneticFloatingIcons';
 import WaterRippleCanvas from '@/components/client/WaterRippleCanvas';
-import AppHeader from '@/components/layout/app-header';
 
 export const metadata: Metadata = {
   title: 'PromptWeaver',
@@ -61,10 +60,7 @@ export default function RootLayout({
         </div>
 
         <AuthProvider>
-          <AppHeader />
-          <main className="flex-grow relative z-10">
-            {children}
-          </main>
+          {children}
         </AuthProvider>
 
         <footer className="w-full py-8 text-center text-sm text-muted-foreground relative z-10 border-t border-border mt-auto">
