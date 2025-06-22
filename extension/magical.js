@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let allPrompts = [];
   let currentCategoryPrompts = [];
   let shownPromptsInCategory = []; // IDs of prompts shown in the current session for the current category
+  let currentView = 'categories'; // To track navigation state
 
   async function checkAuthAndInitialize() {
     if (!window.supabase) {
@@ -40,22 +41,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function loadPrompts() {
+    clearError();
+    if (!window.supabase) {
+      showError('Supabase client is not available.');
+      return;
+    }
     try {
-      const response = await fetch('prompts.json');
-      if (!response.ok) {
-        throw new Error(`Failed to load prompts.json: ${response.statusText}`);
+      console.log('Fetching prompts from Supabase...');
+      const { data, error } = await supabase
+        .from('magical_prompts')
+        .select('*');
+
+      if (error) {
+        throw error;
       }
-      allPrompts = await response.json();
-      console.log('Prompts loaded:', allPrompts.length);
+
+      allPrompts = data;
+      console.log('Prompts loaded successfully from Supabase:', allPrompts.length);
     } catch (err) {
       showError(`Error loading prompts: ${err.message}`);
-      console.error("Error loading prompts.json:", err);
+      console.error("Error loading prompts from Supabase:", err);
     }
   }
 
   function populateCategories() {
+    if (!categoryButtonsDiv) return;
     categoryButtonsDiv.innerHTML = '';
-    const categories = [...new Set(allPrompts.map(p => p.category))];
+    const categories = [...new Set(allPrompts.map(p => p.category.toUpperCase()))];
     if (categories.length === 0) {
       promptsDisplay.innerHTML = '<p class="placeholder-text">No categories available.</p>';
       return;
@@ -68,14 +80,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       'PSYCHOLOGY': { icon: '<img src="icons/brain.svg" class="category-svg" alt="Psychology">', desc: 'Explore psychology prompts' }
     };
     categories.sort().forEach(category => {
-      const upper = category.toUpperCase();
-      const details = categoryDetails[upper] || { icon: '✨', desc: '' };
+      const details = categoryDetails[category] || { icon: '✨', desc: '' };
       const card = document.createElement('button');
       card.className = 'category-card';
       card.innerHTML = `
         <span class="category-emoji">${details.icon}</span>
         <span class="category-info">
-          <span class="category-title">${upper}</span>
+          <span class="category-title">${category}</span>
           <span class="category-desc">${details.desc}</span>
         </span>
       `;
@@ -85,93 +96,88 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function handleCategorySelect(category) {
-    // Hide category buttons after selection
+    currentView = 'prompts';
     categoryButtonsDiv.style.display = 'none';
-    // Show prompts for selected category
-    displayPromptsForButton(category);
+    promptsDisplay.style.display = 'block';
+    shownPromptsInCategory = []; // Reset for new category
+    displayMorePrompts(category); // Display initial set
   }
 
-  function displayPromptsForButton(category) {
-    currentCategoryPrompts = allPrompts.filter(p => p.category === category);
-    shownPromptsInCategory = [];
-    promptsDisplay.innerHTML = '';
-    // Show prompts for the selected category
-    displayPrompts(true, category);
-  }
-
-  function displayPrompts(isNewCategory = false, forcedCategory = null) {
+  function displayMorePrompts(category) {
     clearError();
-    if (isNewCategory) {
-      promptsDisplay.innerHTML = '';
-      shownPromptsInCategory = [];
-    }
-    const selectedCategory = forcedCategory;
-    if (!selectedCategory) {
-      promptsDisplay.innerHTML = '<p class="placeholder-text">Please select a category first.</p>';
-      return;
-    }
-    currentCategoryPrompts = allPrompts.filter(p => p.category === selectedCategory);
-    
-    // Filter out prompts already shown in this session for this category
-    const availablePrompts = currentCategoryPrompts.filter(p => !shownPromptsInCategory.includes(p.id));
+    promptsDisplay.innerHTML = ''; // Clear previous prompts and button
+
+    const availablePrompts = allPrompts.filter(p => p.category.toUpperCase() === category && !shownPromptsInCategory.includes(p.id));
 
     if (availablePrompts.length === 0) {
-      promptsDisplay.innerHTML += '<p class="placeholder-text">No more new prompts in this category for now!</p>';
+      const message = document.createElement('p');
+      message.className = 'placeholder-text';
+      message.textContent = shownPromptsInCategory.length > 0 ? 'No more prompts in this category!' : 'No prompts found for this category.';
+      promptsDisplay.appendChild(message);
       return;
     }
 
-    // Shuffle and pick 5
     const shuffled = availablePrompts.sort(() => 0.5 - Math.random());
-    const promptsToDisplay = shuffled.slice(0, 5);
-
-    if (promptsToDisplay.length === 0 && !isNewCategory) { // If not a new category and still no prompts, it means we exhausted them
-        promptsDisplay.innerHTML += '<p class="placeholder-text">You have seen all prompts in this category for this session.</p>';
-        return;
-    }
-    
-    if (isNewCategory || promptsDisplay.querySelector('.placeholder-text')) {
-        promptsDisplay.innerHTML = ''; // Clear placeholder if it exists
-    }
-
+    const promptsToDisplay = shuffled.slice(0, 3);
 
     promptsToDisplay.forEach(prompt => {
-      shownPromptsInCategory.push(prompt.id); // Add to shown list
-      const card = document.createElement('div');
-      card.className = 'prompt-card';
-      
-      const textElement = document.createElement('p');
-      textElement.className = 'prompt-card-text';
-      textElement.textContent = prompt.text;
-      card.appendChild(textElement);
-
-      if (prompt.type === 'image' && prompt.imageUrl) {
-        const img = document.createElement('img');
-        img.src = prompt.imageUrl;
-        img.alt = `Preview for: ${prompt.text.substring(0, 30)}...`;
-        img.className = 'prompt-card-image-preview';
-        if (prompt.imageHint) {
-            img.dataset.aiHint = prompt.imageHint;
-        }
-        card.appendChild(img);
-      }
-      
-      const copyButton = document.createElement('button');
-      copyButton.textContent = 'Copy Prompt';
-      copyButton.className = 'copy-prompt-button';
-      copyButton.addEventListener('click', () => {
-        navigator.clipboard.writeText(prompt.text).then(() => {
-          copyButton.textContent = 'Copied!';
-          copyButton.classList.add('copied');
-          setTimeout(() => {
-            copyButton.textContent = 'Copy Prompt';
-            copyButton.classList.remove('copied');
-          }, 1500);
-        }).catch(err => console.error('Failed to copy:', err));
-      });
-      card.appendChild(copyButton);
-      
+      shownPromptsInCategory.push(prompt.id);
+      const card = createPromptCard(prompt);
       promptsDisplay.appendChild(card);
     });
+
+    // Check if there are still more prompts available to decide whether to show the button
+    const moreAvailable = allPrompts.filter(p => p.category.toUpperCase() === category && !shownPromptsInCategory.includes(p.id));
+    if (moreAvailable.length > 0) {
+      addGetMoreButton(category);
+    }
+  }
+
+  function addGetMoreButton(category) {
+    const getMoreBtn = document.createElement('button');
+    getMoreBtn.textContent = 'Get More Prompts';
+    getMoreBtn.id = 'getMoreBtn';
+    getMoreBtn.className = 'button'; // Re-use existing button style
+    getMoreBtn.addEventListener('click', () => displayMorePrompts(category));
+    promptsDisplay.appendChild(getMoreBtn); // Use appendChild to add it to the bottom
+  }
+
+  function createPromptCard(prompt) {
+    const card = document.createElement('div');
+    card.className = 'prompt-card';
+    
+    const textElement = document.createElement('p');
+    textElement.className = 'prompt-card-text';
+    textElement.textContent = prompt.prompt_text;
+    card.appendChild(textElement);
+
+    if (prompt.type === 'image' && prompt.image_url) {
+      const img = document.createElement('img');
+      img.src = prompt.image_url;
+      img.alt = `Preview for: ${prompt.prompt_text.substring(0, 30)}...`;
+      img.className = 'prompt-card-image-preview';
+      if (prompt.image_hint) {
+        img.dataset.aiHint = prompt.image_hint;
+      }
+      card.appendChild(img);
+    }
+    
+    const copyButton = document.createElement('button');
+    copyButton.textContent = 'Copy Prompt';
+    copyButton.className = 'copy-prompt-button';
+    copyButton.addEventListener('click', () => {
+      navigator.clipboard.writeText(prompt.prompt_text).then(() => {
+        copyButton.textContent = 'Copied!';
+        copyButton.classList.add('copied');
+        setTimeout(() => {
+          copyButton.textContent = 'Copy Prompt';
+          copyButton.classList.remove('copied');
+        }, 1500);
+      }).catch(err => console.error('Failed to copy:', err));
+    });
+    card.appendChild(copyButton);
+
+    return card;
   }
 
   if (logoutButton) {
@@ -196,7 +202,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   if (backButton) {
     backButton.addEventListener('click', () => {
-      window.location.href = 'menu.html';
+      clearError();
+      if (currentView === 'prompts') {
+        currentView = 'categories';
+        promptsDisplay.innerHTML = '';
+        promptsDisplay.style.display = 'none';
+        categoryButtonsDiv.style.display = 'grid';
+      } else {
+        window.location.href = 'menu.html';
+      }
     });
   }
 

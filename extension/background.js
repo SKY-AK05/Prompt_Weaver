@@ -1,3 +1,19 @@
+// Listen for messages from content scripts
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Check if the message is to open the side panel
+  if (message.type === 'openSidePanel') {
+    if (sender.tab && sender.tab.id) {
+      const tabId = sender.tab.id;
+      console.log(`PromptWeaver: Received request to open side panel for tab ${tabId}.`);
+      // Programmatically open the side panel for the tab that sent the message.
+      chrome.sidePanel.open({ tabId });
+    }
+  }
+  // Return true to indicate you might send a response asynchronously
+  // (not used here, but good practice).
+  return true;
+});
+
 // Listen for when the user clicks on the browser action (extension icon).
 chrome.action.onClicked.addListener(async (tab) => {
   if (tab.id) {

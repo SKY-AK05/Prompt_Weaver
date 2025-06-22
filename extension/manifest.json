@@ -38,5 +38,9 @@
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; connect-src 'self' https://nkmymrhmgaolschqhaoa.supabase.co https://*.supabase.co https://prompt-weaver.vercel.app https://accounts.google.com/ https://github.com/; object-src 'self'"
-  }
+  },
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ]
 }

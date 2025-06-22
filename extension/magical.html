@@ -8,12 +8,11 @@
   <script src="lib/supabase.js"></script>
 </head>
 <body>
-  <img src="icons/Brain Waves.svg" class="floating-bg-icon bg-icon-top-left" alt="Brain Waves background" />
-  <img src="icons/magicwand.svg" class="floating-bg-icon bg-icon-bottom-right" alt="Magic Wand background" />
+  <img src="icons/pen1.svg" class="floating-bg-icon bg-icon-top" alt="Pen background" />
   <img src="icons/puzzle1.svg" class="floating-bg-icon bg-icon-center" alt="Puzzle background" />
   <div class="container">
     <div class="header">
-      <img src="icons/padded_icon-32.png" alt="PromptWeaver" class="logo">
+      <img src="icons/padded_icon-48.png" alt="PromptWeaver" class="logo">
       <h1 class="title">Magical Prompts</h1>
       <div class="header-actions">
         <button id="backButton" class="back-button" aria-label="Back to Menu">
@@ -24,13 +23,16 @@
         </button>
       </div>
     </div>
-
     <div id="error" class="error-message" style="display: none;"></div>
-
-    <div id="categoryButtons" class="category-buttons"></div>
+    <div id="categoryButtons" class="category-grid">
+      <!-- Categories will be loaded here -->
+    </div>
+    <div id="promptsDisplay" class="prompts-grid">
+      <!-- Prompts will be displayed here -->
+    </div>
     <p id="usageInfo" class="usage-info"></p>
   </div>
-
+  <script src="lib/supabase.js"></script>
   <script src="lib/supabaseClient.js"></script>
   <script src="magical.js"></script>
 </body>
