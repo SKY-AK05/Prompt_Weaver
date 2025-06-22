@@ -24,7 +24,6 @@ class PromptWeaverRefine {
       } else {
         this.renderUI();
         this.initializeElements();
-        this.updateThemeToggleIcon();
         this.attachEventListeners();
         this.fetchAndSetSelectedText().then(selectedTextFetched => {
           console.log('PromptWeaverRefine: fetchAndSetSelectedText completed, fetched:', selectedTextFetched);
@@ -53,11 +52,6 @@ class PromptWeaverRefine {
           <img src="icons/padded_icon-48.png" alt="PromptWeaver" class="logo">
           <h1 class="title">Refine Prompt</h1>
           <div class="header-actions">
-            <button id="themeToggleButton" class="theme-toggle-button" aria-label="Toggle Theme" style="background: none; border: none; margin-right: 8px; cursor: pointer;">
-              <svg id="themeToggleIcon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                <!-- Icon will be set by JS -->
-              </svg>
-            </button>
             <button id="backButton" class="back-button" aria-label="Back to Menu">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="button-icon-svg"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
@@ -80,16 +74,16 @@ class PromptWeaverRefine {
               rows="3"
             ></textarea>
           </div>
-          <div class="form-group" style="margin-bottom: 10px;">
+          <div class="form-group">
             <label for="promptLevel" class="label" style="margin-bottom: 6px; display: block;">Prompt Level:</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <select id="promptLevel" class="select" style="flex: 1; min-width: 0; height: 40px; font-size: 15px; border-radius: 8px;">
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <select id="promptLevel" class="select" style="flex: 1; min-width: 0; height: 38px; font-size: 13px; border-radius: 8px;">
                 <option value="Quick">Simple</option>
                 <option value="Balanced" selected>Moderate</option>
                 <option value="Comprehensive">Expert</option>
               </select>
-              <button type="button" id="customizeButton" class="button" style="flex: 1; min-width: 0; height: 40px; font-size: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600;">
-                <span style="font-size: 18px;">⭐</span> Customize
+              <button type="button" id="customizeButton" class="button" style="flex: 1; min-width: 0; height: 38px; font-size: 13px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600;">
+                <span style="font-size: 16px;">⭐</span> Customize
               </button>
             </div>
           </div>
@@ -116,7 +110,7 @@ class PromptWeaverRefine {
             </div>
             <button type="button" id="applyCustomizeButton" class="button" style="margin-top: 8px; width: 100%;">Apply</button>
           </div>
-          <button type="button" id="refineButton" class="button" style="margin-top: 10px;">
+          <button type="button" id="refineButton" class="button">
             Refine Prompt
           </button>
         </form>
@@ -125,11 +119,9 @@ class PromptWeaverRefine {
         </div>
       </div>
     `;
-    console.log('UI rendered. themeToggleButton:', document.getElementById('themeToggleButton'));
-    console.log('UI rendered. themeToggleIcon:', document.getElementById('themeToggleIcon'));
-    // Apply theme on render
-    this.applyTheme(this.getStoredTheme() || 'dark');
-    this.updateThemeToggleIcon();
+    console.log('UI rendered.');
+    // Apply dark theme
+    this.applyDarkTheme();
   }
 
 
@@ -152,12 +144,8 @@ class PromptWeaverRefine {
     this.customStyleSummary = document.getElementById('customStyleSummary');
     this.customizeButton = document.getElementById('customizeButton');
     this.applyCustomizeButton = document.getElementById('applyCustomizeButton');
-    this.themeToggleButton = document.getElementById('themeToggleButton');
-    this.themeToggleIcon = document.getElementById('themeToggleIcon');
 
     if(!this.refineButton) console.error("PromptWeaverRefine: Refine button not found after UI render!");
-    console.log('Elements initialized. themeToggleButton:', this.themeToggleButton);
-    console.log('Elements initialized. themeToggleIcon:', this.themeToggleIcon);
   }
 
   attachEventListeners() {
@@ -196,14 +184,6 @@ class PromptWeaverRefine {
         this.customizePanel.style.display = 'none';
         this.showCustomStyleSummary();
         this.isCustomizing = true;
-      });
-    }
-    if (this.themeToggleButton) {
-      this.themeToggleButton.addEventListener('click', () => {
-        const newTheme = (this.getStoredTheme() === 'dark') ? 'light' : 'dark';
-        this.applyTheme(newTheme);
-        this.storeTheme(newTheme);
-        this.updateThemeToggleIcon();
       });
     }
   }
@@ -568,29 +548,17 @@ class PromptWeaverRefine {
   }
 
   // Theme logic
-  applyTheme(theme) {
+  applyDarkTheme() {
     const root = document.documentElement;
-    if (theme === 'dark') {
-      root.style.setProperty('--bg-main', '#18181b');
-      root.style.setProperty('--bg-panel', '#232326');
-      root.style.setProperty('--text-main', '#f3f3f7');
-      root.style.setProperty('--text-label', '#bdbdc2');
-      root.style.setProperty('--border-main', '#33343a');
-      root.style.setProperty('--button-main', '#ea5656');
-      root.style.setProperty('--button-text', '#fff');
-      root.style.setProperty('--select-bg', '#232326');
-      root.style.setProperty('--select-text', '#f3f3f7');
-    } else {
-      root.style.setProperty('--bg-main', '#fff');
-      root.style.setProperty('--bg-panel', '#fff');
-      root.style.setProperty('--text-main', '#232326');
-      root.style.setProperty('--text-label', '#444');
-      root.style.setProperty('--border-main', '#d1d5db');
-      root.style.setProperty('--button-main', '#ea5656');
-      root.style.setProperty('--button-text', '#fff');
-      root.style.setProperty('--select-bg', '#fff');
-      root.style.setProperty('--select-text', '#232326');
-    }
+    root.style.setProperty('--bg-main', '#18181b');
+    root.style.setProperty('--bg-panel', '#232326');
+    root.style.setProperty('--text-main', '#f3f3f7');
+    root.style.setProperty('--text-label', '#bdbdc2');
+    root.style.setProperty('--border-main', '#33343a');
+    root.style.setProperty('--button-main', '#ea5656');
+    root.style.setProperty('--button-text', '#fff');
+    root.style.setProperty('--select-bg', '#232326');
+    root.style.setProperty('--select-text', '#f3f3f7');
     document.body.style.background = 'var(--bg-main)';
     // Update all relevant elements
     const panel = document.getElementById('customizePanel');
@@ -634,30 +602,6 @@ class PromptWeaverRefine {
       card.style.setProperty('color', 'var(--text-main)', 'important');
       card.style.setProperty('background', 'var(--bg-panel)', 'important');
     });
-    // Remove any debug styles from theme toggle button
-    const themeBtn = document.querySelector('.theme-toggle-button');
-    if (themeBtn) {
-      themeBtn.style.border = '1px solid var(--border-main)';
-      themeBtn.style.background = 'var(--bg-panel)';
-      themeBtn.style.color = 'var(--text-main)';
-    }
-  }
-  storeTheme(theme) {
-    try { localStorage.setItem('promptweaver_theme', theme); } catch(e) {}
-  }
-  getStoredTheme() {
-    try { return localStorage.getItem('promptweaver_theme'); } catch(e) { return null; }
-  }
-  updateThemeToggleIcon() {
-    if (!this.themeToggleIcon) return;
-    const theme = this.getStoredTheme() || 'dark';
-    if (theme === 'dark') {
-      // Moon icon
-      this.themeToggleIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"></path>`;
-    } else {
-      // Sun icon
-      this.themeToggleIcon.innerHTML = `<circle cx="12" cy="12" r="5"></circle><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m16.95 6.95-1.41-1.41M6.34 6.34 4.93 4.93m12.02 0-1.41 1.41M6.34 17.66l-1.41 1.41"></path>`;
-    }
   }
 }
 

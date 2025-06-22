@@ -9,10 +9,10 @@ interface Ripple {
   alpha: number;
 }
 
-const RIPPLE_GROWTH = 3.5; // px per frame
+const RIPPLE_GROWTH = 1.5; // px per frame (slower)
 const RIPPLE_FADE = 0.014; // alpha per frame
-const RIPPLE_THROTTLE = 40; // ms between ripples
-const RIPPLE_COLOR_LIGHT = "rgba(0,0,0,0.45)";
+const RIPPLE_THROTTLE = 70; // ms between ripples (slower)
+const RIPPLE_COLOR_LIGHT = "rgba(74, 68, 68, 0.45)";
 const RIPPLE_COLOR_DARK = "rgba(0, 0, 0, 0.32)"; //rgb(44, 107, 170), more visible
 
 const WaterRippleCanvas: React.FC = () => {
@@ -64,14 +64,21 @@ const WaterRippleCanvas: React.FC = () => {
 
       ripples.current = ripples.current.filter(r => r.alpha > 0.01 && r.radius < 50);
       for (const ripple of ripples.current) {
-        ctx.beginPath();
-        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, 2 * Math.PI);
-        const baseColor = isDark ? RIPPLE_COLOR_DARK : RIPPLE_COLOR_LIGHT;
-        // Replace the alpha in baseColor with the current ripple alpha
-        let color = baseColor.replace(/(0?\.\d+|1)\)?$/, ripple.alpha.toFixed(2) + ")");
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Draw multiple wave rings for each ripple
+        const numWaves = 4; // Number of visible wave rings
+        for (let i = 0; i < numWaves; i++) {
+          const phase = (ripple.radius / 8) + i * Math.PI / numWaves;
+          const waveRadius = ripple.radius + i * 8;
+          const waveAlpha = ripple.alpha * (0.5 + 0.5 * Math.sin(phase));
+          if (waveAlpha < 0.01) continue;
+          ctx.beginPath();
+          ctx.arc(ripple.x, ripple.y, waveRadius, 0, 2 * Math.PI);
+          ctx.strokeStyle = isDark ? RIPPLE_COLOR_DARK : RIPPLE_COLOR_LIGHT;
+          ctx.globalAlpha = waveAlpha;
+          ctx.lineWidth = 2 + 2 * Math.sin(phase);
+          ctx.stroke();
+          ctx.globalAlpha = 1.0; // Reset alpha
+        }
         ripple.radius += RIPPLE_GROWTH;
         ripple.alpha -= RIPPLE_FADE;
       }
@@ -100,19 +107,7 @@ const WaterRippleCanvas: React.FC = () => {
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: "fixed",
-        inset: 0,
-        width: "100vw",
-        height: "100vh",
-        pointerEvents: "none", // So it doesn't block UI
-        zIndex: 2, // Above background, below modals
-      }}
-    />
-  );
+  return null;
 };
 
 export default WaterRippleCanvas; 

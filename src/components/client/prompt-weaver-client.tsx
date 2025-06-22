@@ -296,6 +296,10 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
         if (user) {
           const createdAt = new Date();
           const expiresAt = new Date(createdAt.getTime() + 10 * 24 * 60 * 60 * 1000); // 10 days from now
+          const frameworkName = frameworks.find(fw => fw.id === selectedFramework)?.name || null;
+          const refinementType = enableFrameworkRefinement
+            ? (refinedPrompts.length > 0 ? "both" : "framework")
+            : "standard";
           const { data: insertedData, error: saveError } = await supabase.from("prompts").insert([
             {
               user_id: user.id,
@@ -309,6 +313,13 @@ export default function PromptWeaverClient({ isLoggedIn }: PromptWeaverClientPro
               refined_prompt_rating_2: result.refinedPrompts[1]?.rating || null,
               refined_prompt_text_3: result.refinedPrompts[2]?.promptText || null,
               refined_prompt_rating_3: result.refinedPrompts[2]?.rating || null,
+              framework_id: enableFrameworkRefinement ? selectedFramework : null,
+              framework_name: enableFrameworkRefinement ? frameworkName : null,
+              framework_refined_prompt_text_1: enableFrameworkRefinement ? frameworkRefinedPrompts[0] || null : null,
+              framework_refined_prompt_text_2: enableFrameworkRefinement ? frameworkRefinedPrompts[1] || null : null,
+              framework_refined_prompt_text_3: enableFrameworkRefinement ? frameworkRefinedPrompts[2] || null : null,
+              refinement_type: refinementType,
+              framework_access_level: enableFrameworkRefinement ? uiPromptLevel : null,
               is_favorite: false,
               is_temporary: true,
               expires_at: expiresAt.toISOString(),
