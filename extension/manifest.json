@@ -26,9 +26,28 @@
     {
       "matches": [
         "https://chat.openai.com/*",
+        "https://chatgpt.com/*",
         "https://gemini.google.com/*",
+        "https://bard.google.com/*",
         "https://claude.ai/*",
-        "https://grok.x.ai/*"
+        "https://claude.ai/chat/*",
+        "https://console.anthropic.com/*",
+        "https://grok.x.ai/*",
+        "https://www.perplexity.ai/*",
+        "https://labs.perplexity.ai/*",
+        "https://poe.com/*",
+        "https://chat.mistral.ai/*",
+        "https://huggingface.co/chat/*",
+        "https://pi.ai/*",
+        "https://you.com/chat/*",
+        "https://you.com/search/*",
+        "https://deepmind.google/*",
+        "https://civitai.com/*",
+        "https://character.ai/*",
+        "https://beta.character.ai/*",
+        "https://my.replika.com/*",
+        "https://elevenlabs.io/*",
+        "https://app.synthesia.io/*"
       ],
       "js": ["content.js"]
     }
