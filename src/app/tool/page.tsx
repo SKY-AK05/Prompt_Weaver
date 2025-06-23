@@ -1,3 +1,4 @@
+"use client";
 import AppHeader, { useAuth, AuthProvider } from '@/components/layout/app-header';
 import PromptWeaverClient from '@/components/client/prompt-weaver-client';
 
